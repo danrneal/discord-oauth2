@@ -352,7 +352,7 @@ class Bot(discord.Client):
                 if 'sent' not in payload:
                     for admin in args.admin_ids:
                         await discord.utils.get(
-                            self.get_all_members()
+                            self.get_all_members(),
                             id=admin
                         ).send(embed=em)
                 log.info((
@@ -442,7 +442,7 @@ class Bot(discord.Client):
                     member.display_name))
             for admin in args.admin_ids:
                 await discord.utils.get(
-                    self.get_all_members()
+                    self.get_all_members(),
                     id=admin
                 ).send(
                     '`{}` joined the server but was not assigned the guest ' +
