@@ -97,7 +97,7 @@ def get_args():
     )
     parser.add_argument(
         '-stripe', '--stripe_channels',
-        type=str,
+        type=int,
         action='append',
         default=[]
     )
@@ -113,7 +113,7 @@ def get_args():
     )
     parser.add_argument(
         '-aid', '--admin_ids',
-        type=str,
+        type=int,
         action='append',
         default=[]
     )

@@ -33,10 +33,8 @@ class Bot(discord.Client):
                 'stripe_id': None,
                 'guilds': []
             }
-        if str(member.guild.id) not in dicts.user_info[str(member.id)][
-                'guilds']:
-            dicts.user_info[str(member.id)]['guilds'].append(
-                str(member.guild.id))
+        if member.guild.id not in dicts.user_info[str(member.id)]['guilds']:
+            dicts.user_info[str(member.id)]['guilds'].append(member.guild.id)
         if dicts.user_info[str(member.id)]['stripe_id'] is None:
             if member.top_role >= roles[args.premium_role]:
                 dicts.user_info[str(member.id)]['plan'] = args.premium_role
@@ -104,7 +102,7 @@ class Bot(discord.Client):
                         member.display_name
                     ))
 
-    async def guest_check(client):
+    async def guest_check(client, q, stripe_channel):
         guests = {}
         for member in client.get_all_members():
             if roles[args.guest_role] in member.roles:
@@ -127,30 +125,21 @@ class Bot(discord.Client):
                         ).format(args.guest_role.title(), member.display_name))
         log.info('Waiting `{}` seconds for next guest check.'.format(
             min(min(guests) + 5, args.trial_time)))
-        await Bot.webhook(client, min(min(guests) + 5, args.trial_time))
+        await Bot.webhook(client, q, stripe_channel,
+                          min(min(guests) + 5, args.trial_time))
 
-    async def webhook(client, wait_time):
+    async def webhook(client, q, stripe_channel, wait_time):
         end_time = datetime.utcnow() + timedelta(seconds=wait_time)
         while datetime.utcnow() <= end_time:
-            while (dicts.queues[str(guild.id)].empty() and
-                   datetime.utcnow() <= end_time):
+            while q.empty() and datetime.utcnow() <= end_time:
                 await asyncio.sleep(1)
             if datetime.utcnow() > end_time:
                 break
-            payload = dicts.queues[str(guild.id)].get()
+            payload = q.get()
             member = discord.utils.get(
                 client.get_all_members(),
                 id=payload['discord_id']
             )
-            for channel in args.stripe_channels:
-                try:
-                    stripe_channel = discord.utils.get(
-                        client.get_all_channels(),
-                        id=channel
-                    )
-                    break
-                except:
-                    pass
             if payload['event'] == 'charge.succeeded':
                 if 'area' not in payload:
                     em = discord.Embed(
@@ -383,12 +372,17 @@ class Bot(discord.Client):
                 except:
                     log.info('Unable to send `{}` message to `{}`'.format(
                         em.title, member.display_name))
-            dicts.queues[str(guild.id)].task_done()
+            q.task_done()
         await Bot.guest_check(client)
 
     async def on_ready(self):
         for guild in self.guilds:
-            dicts.queues[str(guild.id)] = Queue()
+            dicts.queues[guild.id] = Queue()
+            q = dicts.queues[guild.id]
+            for channel in guild.channels:
+                if channel.id in args.stripe_channels:
+                    stripe_channel = channel
+                    break
             for role in guild.roles:
                 roles[role.name.lower()] = role
                 if role.name.lower().endswith('-' + args.subscriber_role):
@@ -403,7 +397,7 @@ class Bot(discord.Client):
         if count > 0:
             with open(get_path('dicts/expired.json'), 'w') as expired_file:
                 json.dump(dicts.expired, expired_file, indent=4)
-        await Bot.guest_check(self)
+        await Bot.guest_check(self, q, stripe_channel)
 
     async def on_member_join(self, member):
         if (str(member.id) in dicts.user_info and
