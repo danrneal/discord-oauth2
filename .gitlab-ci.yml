@@ -1,0 +1,13 @@
+image: python:latest
+
+# install steps MUST succeed or will immediately halt the build
+before_script:
+  - pip install flake8
+  - pip install -r requirements.txt
+
+# script steps, if erroring, will fail the build but not stop the build process
+# this is handy because we want to know that linting is broken, but it shouldn't
+# stop us from testing/linting/compiling other things as well
+job:
+  script:
+    - flake8 --statistics --show-source --disable-noqa

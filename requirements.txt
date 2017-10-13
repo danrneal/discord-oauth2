@@ -1,0 +1,6 @@
+stripe
+flask
+gunicorn
+configargparse
+requests_oauthlib
+git+https://github.com/Rapptz/discord.py@rewrite

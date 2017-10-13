@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+{% block content %}
+
+  <div>
+    <p style="color: red">{{ msg }}</p>
+  </div>
+
+  <div>
+    <h1>Subscription Services</h1>
+  </div>
+
+  <div>
+    <div>
+      <h2>[Placeholder]</h2>
+      <p>Access to all raid & pokemon notification feeds in Discord AND our live pokemon/raid/gym map.</p>
+
+      <form action="/subscribe/success?id={{ id }}&plan=[Placeholder]&coupon={{ coupon }}" method="post">
+
+        <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                data-key="{{ key }}"
+                <!-- data-image="/oauth2/static/logo.png" -->
+                <!-- data-name="" -->
+                data-description="[Placeholder] Subscription"
+                data-amount="{{ amt2 }}"
+                data-locale="auto"
+                data-zip-code="true"
+                data-panel-label="Subscribe"
+                data-email="{{ email }}"
+                data-label="$14.99/mo"></script>
+      </form>
+    </div>
+
+    <div>
+      <h2>[Placeholder]</h2>
+      <p>Access to all raid & pokemon notification feeds in Discord (does not include the live pokemon/raid/gym map).</p>
+
+      <form action="/subscribe/success?id={{ id }}&plan=[Placeholder]&coupon={{ coupon }}" method="post">
+
+        <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                data-key="{{ key }}"
+                <!-- data-image="/oauth2/static/logo.png" -->
+                <!-- data-name="" -->
+                data-description="[Placeholder] Subscription"
+                data-amount="{{ amt1 }}"
+                data-locale="auto"
+                data-zip-code="true"
+                data-panel-label="Subscribe"
+                data-email="{{ email }}"
+                data-label="$9.99/mo"></script>
+      </form>
+    </div>
+
+    <br>
+    <hr>
+
+    <div>
+      <form class="left">
+        <article>
+          <label>
+            <span>COUPON CODE:</span>
+          </label>
+        </article>
+        <input type="text" name="coupon">
+        <input type="submit" value="Apply">
+      </form>
+    </div>
+  </div>
+
+  <br>
+  <hr>
+  <div>
+    <p>Service can be cancelled at any time by clicking the button below.</p>
+    <form action="/subscribe/unsubscribed?id={{ id }}" method="post">
+      <input type="submit" value="Unsubscribe">
+    </form>
+  </div>
+
+  <br>
+  <hr>
+
+  <div>
+    <h1>Vacation Service or New Area Request</h1>
+    <p>All vacation or new area scans must be pre-approved.</p>
+    <form class="left">
+      <article>
+        <label>
+          <span>AMOUNT:</span>
+        </label>
+      </article>
+      <input type="text" name="amount">
+      <article>
+        <label>
+          <span>AREA REQUESTED:</span>
+        </label>
+      </article>
+      <input type="text" name="area"><br><br>
+      <input type="submit">
+    </form>
+  </div>
+
+{% endblock %}

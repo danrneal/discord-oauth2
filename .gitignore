@@ -1,0 +1,17 @@
+*.pyc
+__pycache__
+oauth2.sock
+config/*
+!config/config.ini.example
+env/*
+dicts/*
+!dicts/guest_expired_msg.txt.example
+!dicts/guest_used_msg.txt.example
+static/*
+!static/unsubscribed.gif
+templates/*
+!templates/custom_payment.html.example
+!templates/layout.html.example
+!templates/subscribe.html.example
+!templates/unsubscribed.html
+null

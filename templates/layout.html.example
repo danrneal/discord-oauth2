@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AlphaPokes</title>
+  <style type="text/css" media="screen">
+    .top {
+      <!-- background: url("/oauth2/static/banner_top.png"); -->
+      background-size: 100% 219px;
+      background-repeat: no-repeat;
+      margin: -8px;
+    }
+
+    .bottom {
+      <!-- background: url("/oauth2/static/banner_bottom.png"); -->
+      background-size: 100% 196px;
+      background-repeat: no-repeat;
+      margin: -10px;
+    }
+
+    .content {
+      max-width: 480px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .left {
+      text-align: left;
+      display: inline-block
+    }
+
+    .fineprint {
+      font-size: 8pt;
+    }
+
+    img {
+      width: 100%;
+    }
+
+    form article label {
+      display: block;
+      margin: 5px;
+    }
+
+    form .submit {
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="content">
+      <!-- <img src="/oauth2/static/logo.png" alt="Logo"> -->
+    </div>
+  </div>
+  <div>
+    <div class="content">
+      {% block content %}{% endblock %}
+      <br>
+      <div class="fineprint">
+        <p>[Placeholder] does not ever store nor receive any sensitive customer credit card information.  All of our credit card processing is managed by Stripe, a PCI Level 1 Compliant Service Provider.</p>
+        <a href=https://stripe.com/docs/security/stripe>https://stripe.com/docs/security/stripe</a>
+        <p>[Placeholder] is not associated with Niantic, ThePokemonCompany, or any of it's subsidiaries.</p>
+      </div>
+    </div>
+  </div>
+  <br>
+  <br>
+  <div class="bottom">
+    <div class="content">
+      <!-- <img src="/oauth2/static/footer.png" alt="footer"> -->
+    </div>
+  </div>
+</body>
+</html>
