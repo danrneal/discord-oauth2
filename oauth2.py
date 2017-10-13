@@ -53,6 +53,7 @@ def checker(token):
     loop.run_until_complete(client.login(token))
     loop.run_until_complete(client.connect())
 
+
 for token in args.bot_tokens:
     thread = Thread(target=checker, kwargs={'token': token})
     thread.start()
@@ -153,7 +154,8 @@ def subscribe():
             else:
                 ip = request.remote_addr.split(',')[0]
             try:
-                with open(get_path('dicts/authorized.json')) as authorized_file:
+                with open(
+                        get_path('dicts/authorized.json')) as authorized_file:
                     authorized = json.load(authorized_file)
             except:
                 authorized = []
@@ -314,7 +316,6 @@ def success():
             except stripe.error.CardError as e:
                 customer.delete()
                 dicts.user_info[request.args['id']]['stripe_id'] = None
-                dicts2.user_info[request.args['id']]['stripe_id'] = None
                 log.info((
                     'Deleted `{}` since their card was declined on signup'
                 ).format(customer.id))
@@ -322,7 +323,6 @@ def success():
             except:
                 customer.delete()
                 dicts.user_info[request.args['id']]['stripe_id'] = None
-                dicts2.user_info[request.args['id']]['stripe_id'] = None
                 log.info((
                     'Deleted `{}` since there was an error while processing ' +
                     'their card on signup'
@@ -363,7 +363,6 @@ def success():
             except stripe.error.CardError as e:
                 customer.delete()
                 dicts.user_info[request.args['id']]['stripe_id'] = None
-                dicts2.user_info[request.args['id']]['stripe_id'] = None
                 log.info((
                     'Deleted `{}` since their card was declined on signup'
                 ).format(customer.id))
@@ -371,7 +370,6 @@ def success():
             except:
                 customer.delete()
                 dicts.user_info[request.args['id']]['stripe_id'] = None
-                dicts2.user_info[request.args['id']]['stripe_id'] = None
                 log.info((
                     'Deleted `{}` since there was an error while processing ' +
                     'their card on signup'
@@ -386,7 +384,8 @@ def success():
             else:
                 ip = request.remote_addr.split(',')[0]
             try:
-                with open(get_path('dicts/authorized.json')) as authorized_file:
+                with open(get_path(
+                        'dicts/authorized.json')) as authorized_file:
                     authorized = json.load(authorized_file)
             except:
                 authorized = []

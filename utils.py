@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import configargparse
+import json
 
 logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
@@ -145,4 +146,3 @@ class Dicts(object):
         guest_used_msg = (
             "Our records indicate that you have alerady used your free trial."
         )
-        
