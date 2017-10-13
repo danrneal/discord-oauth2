@@ -115,7 +115,7 @@ class Bot(discord.Client):
                 else:
                     await member.remove_roles(roles[args.guest_role])
                     try:
-                        await member.send(guest_expired_msg)
+                        await member.send(dicts.guest_expired_msg)
                         log.info((
                             'Removed `{}` role from `{}` and sent guest ' +
                             'expired message.'
@@ -188,7 +188,7 @@ class Bot(discord.Client):
                     if 'sent' not in payload:
                         for admin in args.admin_ids:
                             await discord.utils.get(
-                                self.get_all_members(),
+                                client.get_all_members(),
                                 id=admin
                             ).send(embed=em)
                     log.info((
@@ -434,7 +434,7 @@ class Bot(discord.Client):
                     json.dump(dicts.expired, expired_file, indent=4)
         else:
             try:
-                await member.send(guest_used_msg)
+                await member.send(dicts.guest_used_msg)
                 log.info('Sent `{}` guest used message.'.format(
                     member.display_name))
             except:
