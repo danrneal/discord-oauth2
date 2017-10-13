@@ -395,7 +395,8 @@ def success():
                 json.dump(authorized, authorized_file, indent=4)
             if ('lon' not in request.args or
                     'static' not in request.args['lon']):
-                log.info("`{}` logged into the map!".format(user['username']))
+                log.info("`{}` logged into the map!".format(
+                    request.form['stripeEmail'].split(' - ')[0]))
             if 'lat' in request.args and 'lon' in request.args:
                 return redirect('/?lat={}&lon={}'.format(
                     request.args['lat'], request.args['lon']))
