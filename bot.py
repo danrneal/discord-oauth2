@@ -132,11 +132,12 @@ class Bot(discord.Client):
     async def webhook(client, wait_time):
         end_time = datetime.utcnow() + timedelta(seconds=wait_time)
         while datetime.utcnow() <= end_time:
-            while q.empty() and datetime.utcnow() <= end_time:
+            while (dicts.queues[str(guild.id)].empty() and
+                   datetime.utcnow() <= end_time):
                 await asyncio.sleep(1)
             if datetime.utcnow() > end_time:
                 break
-            payload = q.get()
+            payload = dicts.queues[str(guild.id)].get()
             member = discord.utils.get(
                 client.get_all_members(),
                 id=payload['discord_id']
@@ -352,7 +353,7 @@ class Bot(discord.Client):
                 if 'sent' not in payload:
                     for admin in args.admin_ids:
                         await discord.utils.get(
-                            self.get_all_members(),
+                            client.get_all_members(),
                             id=admin
                         ).send(embed=em)
                 log.info((
@@ -382,7 +383,7 @@ class Bot(discord.Client):
                 except:
                     log.info('Unable to send `{}` message to `{}`'.format(
                         em.title, member.display_name))
-            q.task_done()
+            dicts.queues[str(guild.id)].task_done()
         await Bot.guest_check(client)
 
     async def on_ready(self):
