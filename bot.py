@@ -8,13 +8,13 @@ import asyncio
 import json
 from queue import Queue
 from datetime import datetime, timedelta
-from utils import get_path, get_args, Dicts
+from utils import get_path, get_args
 
 logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
     level=logging.INFO
 )
-log = logging.getLogger('Bot')
+log = logging.getLogger(threading.current_thread().name)
 logging.getLogger("discord").setLevel(logging.ERROR)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 logging.getLogger("requests").setLevel(logging.ERROR)
@@ -54,11 +54,11 @@ class Bot(discord.Client):
             }
         if Bot.users[str(member.id)]['stripe_id'] is None:
             if roles[args.premium_role] >= member.top_role:
-                user['plan'] = args.premium_role
+                Bot.users[str(member.id)]['plan'] = args.premium_role
             elif roles[args.standard_role] in member.roles:
-                user['plan'] = args.standard_role
+                Bot.users[str(member.id)]['plan'] = args.standard_role
             else:
-                user['plan'] = None
+                Bot.users[str(member.id)]['plan'] = None
         if (Bot.users[str(member.id)]['plan'] == args.premium_role and
                 roles[args.premium_role] > member.top_role):
             await member.add_roles(roles[args.premium_role])
