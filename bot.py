@@ -466,7 +466,7 @@ class Bot(discord.Client):
             Dicts.users.pop(str(member.id))
             log.info('Removed `{}` from  dict.'.format(
                 member.display_name))
-        else
+        else:
             Dicts.users[str(member.id)]['guilds'].remove(member.guild.id)
             log.info('Removed `{}` from the server dict.'.format(
                 member.display_name))
