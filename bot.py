@@ -462,7 +462,7 @@ class Bot(discord.Client):
             await Bot.role_check(self, after)
 
     async def on_member_remove(self, member):
-        if (Dicts.users[str(member.id)]['strip_id'] is None and
+        if (Dicts.users[str(member.id)]['stripe_id'] is None and
                 len(Dicts.users[str(member.id)]['guilds']) <= 1):
             Dicts.users.pop(str(member.id))
             log.info('Removed `{}` from  dict.'.format(
