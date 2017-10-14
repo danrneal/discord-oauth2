@@ -29,8 +29,10 @@ class Bot(discord.Client):
         if str(member.id) not in Dicts.users:
             Dicts.users[str(member.id)] = {
                'stripe_id': None,
-               'guilds': []
+               'guilds': [member.guild.id]
             }
+        if member.guild.id not in Dicts.users[str(member.id)]['guilds']:
+            Dicts.users[str(member.id)]['guilds'].append(member.guild.id)
         if Dicts.users[str(member.id)]['stripe_id'] is None:
             if roles[args.premium_role] <= member.top_role:
                 Dicts.users[str(member.id)]['plan'] = args.premium_role
