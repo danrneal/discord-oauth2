@@ -11,7 +11,7 @@ from requests_oauthlib import OAuth2Session
 from flask import Flask, session, redirect, request, url_for, render_template
 from time import sleep
 from bot import Bot
-from utils import get_path, get_args
+from utils import get_path, get_args, Dicts
 
 logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
@@ -38,10 +38,10 @@ for customer in customers.auto_paging_iter():
         log.info('Deleted `{}` since they had no subscriptions'.format(
             customer.id))
     else:
-        if discord_id not in Bot.users:
-            Bot.users[discord_id] = {'guilds': []}
-        Bot.users['stripe_id'] = customer['id']
-        Bot.users['plan'] = customer['subscriptions']['data'][0]['plan']['id']
+        if discord_id not in Dicts.users:
+            Dicts.users[discord_id] = {'guilds': []}
+        Dicts.users['stripe_id'] = customer['id']
+        Dicts.users['plan'] = customer['subscriptions']['data'][0]['plan']['id']
 
 
 def checker(token):
@@ -137,15 +137,15 @@ def subscribe():
             from_login is False and
             'coupon' not in request.args and
             'amount' not in request.args and
-            (user['id'] not in Bot.users or
-             Bot.users[user['id']]['plan'] is None)):
+            (user['id'] not in Dicts.users or
+             Dicts.users[user['id']]['plan'] is None)):
             return redirect('/login')
-        elif from_login is True and user['id'] not in Bot.users:
+        elif from_login is True and user['id'] not in Dicts.users:
             return redirect('https://discord.gg/YU8QuQe')
         elif (('map' in request.args or
                from_login is True) and
-              user['id'] in Bot.users and
-              Bot.users[user['id']]['plan'] == args.premium_role):
+              user['id'] in Dicts.users and
+              Dicts.users[user['id']]['plan'] == args.premium_role):
             if request.headers["X-Forwarded-For"]:
                 ip = request.headers["X-Forwarded-For"].split(',')[0]
             else:
@@ -253,10 +253,10 @@ def subscribe():
 @app.route('/subscribe/success', methods=['POST'])
 def success():
     if request.args['plan'] != 'charge':
-        if (request.args['id'] in Bot.users and
-                Bot.users[request.args['id']]['stripe_id'] is not None):
+        if (request.args['id'] in Dicts.users and
+                Dicts.users[request.args['id']]['stripe_id'] is not None):
             customer = stripe.Customer.retrieve(
-                Bot.users[request.args['id']]['stripe_id'])
+                Dicts.users[request.args['id']]['stripe_id'])
             customer.description = (
                 request.form['stripeEmail'].split(' - ')[0] + ' - ' +
                 request.args['id']
@@ -274,9 +274,9 @@ def success():
                 email=request.form['stripeEmail'].split(' - ')[1],
                 source=request.form['stripeToken'])
             log.info('Created customer: `{}`'.format(customer.id))
-        if request.args['id'] not in Bot.users:
-            Bot.users[request.args['id']] = {'guilds': []}
-        Bot.users[request.args['id']]['stripe_id'] = customer['id']
+        if request.args['id'] not in Dicts.users:
+            Dicts.users[request.args['id']] = {'guilds': []}
+        Dicts.users[request.args['id']]['stripe_id'] = customer['id']
         if request.args['coupon'] == 'None':
             coupon = None
         else:
@@ -312,18 +312,18 @@ def success():
                     args.standard_role, customer.id))
             except stripe.error.CardError as e:
                 customer.delete()
-                Bot.users[request.args['id']]['stripe_id'] = None
-                if len(Bot.users[request.args['id']]['guilds']) == 0:
-                    Bot.users.pop(request.args['id'])
+                Dicts.users[request.args['id']]['stripe_id'] = None
+                if len(Dicts.users[request.args['id']]['guilds']) == 0:
+                    Dicts.users.pop(request.args['id'])
                 log.info((
                     'Deleted `{}` since their card was declined on signup'
                 ).format(customer.id))
                 return 'CARD DECLINED'
             except:
                 customer.delete()
-                Bot.users[request.args['id']]['stripe_id'] = None
-                if len(Bot.users[request.args['id']]['guilds']) == 0:
-                    Bot.users.pop(request.args['id'])
+                Dicts.users[request.args['id']]['stripe_id'] = None
+                if len(Dicts.users[request.args['id']]['guilds']) == 0:
+                    Dicts.users.pop(request.args['id'])
                 log.info((
                     'Deleted `{}` since there was an error while processing ' +
                     'their card on signup'
@@ -332,7 +332,7 @@ def success():
                     'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN ' +
                     'ADMINISTRATOR'
                 )
-        Bot.users[request.args['id']]['plan'] = args.standard_role
+        Dicts.users[request.args['id']]['plan'] = args.standard_role
     elif request.args['plan'] == args.premium_role:
         if len(customer.subscriptions['data']) > 0:
             subscription = stripe.Subscription.retrieve(
@@ -363,18 +363,18 @@ def success():
                     args.premium_role, customer.id))
             except stripe.error.CardError as e:
                 customer.delete()
-                Bot.users[request.args['id']]['stripe_id'] = None
-                if len(Bot.users[request.args['id']]['guilds']) == 0:
-                    Bot.users.pop(request.args['id'])
+                Dicts.users[request.args['id']]['stripe_id'] = None
+                if len(Dicts.users[request.args['id']]['guilds']) == 0:
+                    Dicts.users.pop(request.args['id'])
                 log.info((
                     'Deleted `{}` since their card was declined on signup'
                 ).format(customer.id))
                 return 'CARD DECLINED'
             except:
                 customer.delete()
-                Bot.users[request.args['id']]['stripe_id'] = None
-                if len(Bot.users[request.args['id']]['guilds']) == 0:
-                    Bot.users.pop(request.args['id'])
+                Dicts.users[request.args['id']]['stripe_id'] = None
+                if len(Dicts.users[request.args['id']]['guilds']) == 0:
+                    Dicts.users.pop(request.args['id'])
                 log.info((
                     'Deleted `{}` since there was an error while processing ' +
                     'their card on signup'
@@ -383,7 +383,7 @@ def success():
                     'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN ' +
                     'ADMINISTRATOR'
                 )
-        Bot.users[request.args['id']]['plan'] = args.premium_role
+        Dicts.users[request.args['id']]['plan'] = args.premium_role
         if request.headers["X-Forwarded-For"]:
             ip = request.headers["X-Forwarded-For"].split(',')[0]
         else:
@@ -438,10 +438,10 @@ def success():
 
 @app.route('/subscribe/unsubscribed', methods=['POST'])
 def unsubscribed():
-    if (request.args['id'] in Bot.users and
-            Bot.users[request.args['id']]['stripe_id'] is not None):
+    if (request.args['id'] in Dicts.users and
+            Dicts.users[request.args['id']]['stripe_id'] is not None):
         customer = stripe.Customer.retrieve(
-            Bot.users[request.args['id']]['stripe_id'])
+            Dicts.users[request.args['id']]['stripe_id'])
         subscription = stripe.Subscription.retrieve(
             customer.subscriptions['data'][0]['id'])
         if subscription.cancel_at_period_end is False:
@@ -515,7 +515,7 @@ def webhooks():
             'plan': event.data['object']['plan']['name']
         }
         customer.delete()
-        Bot.users[payload['discord_id']]['plan'] = None
+        Dicts.users[payload['discord_id']]['plan'] = None
         delete = True
     elif event.type == 'customer.subscription.updated':
         customer = stripe.Customer.retrieve(event.data['object']['customer'])
@@ -570,20 +570,20 @@ def webhooks():
             'amount': event.data['object']['amount_due']
         }
     if (payload is not None and
-            payload['discord_id'] in Bot.users):
-        for guild in Bot.users[payload['discord_id']]['guilds']:
+            payload['discord_id'] in Dicts.users):
+        for guild in Dicts.users[payload['discord_id']]['guilds']:
             count = 0
             while count <= 6:
-                if guild in Bot.guilds:
-                    Bot.guilds[guild]['q'].put(payload)
-                    Bot.guilds[guild]['q'].join()
+                if guild in Dicts.guilds:
+                    Dicts.guilds[guild]['q'].put(payload)
+                    Dicts.guilds[guild]['q'].join()
                     payload['sent'] = True
                     break
                 else:
                     sleep(5)
                     count += 1
     if delete is True:
-        Bot.users[payload['discord_id']]['stripe_id'] = None
+        Dicts.users[payload['discord_id']]['stripe_id'] = None
     log.info('Received event: id={id}, type={type}'.format(
         id=event.id, type=event.type))
     return ('', 200)

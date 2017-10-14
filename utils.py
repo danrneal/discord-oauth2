@@ -123,3 +123,25 @@ def get_args():
     args = parser.parse_args()
 
     return args
+
+class Dicts(object):
+
+    users = {}
+    guilds = {}
+    try:
+        with open(get_path('dicts/expired.json')) as expired_file:
+            expired = json.load(expired_file)
+    except:
+        expired = []
+    try:
+        with open(get_path('dicts/guest_expired_msg.txt')) as msg_file:
+            guest_expired_msg = msg_file.read()
+    except:
+        guest_expired_msg = "Guest Trial has expired."
+    try:
+        with open(get_path('dicts/guest_used_msg.txt')) as msg_file:
+            guest_used_msg = msg_file.read()
+    except:
+        guest_used_msg = (
+            "Our records indicate that you have alerady used your free trial."
+        )
