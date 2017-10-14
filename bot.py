@@ -46,7 +46,6 @@ class Bot(discord.Client):
 
     async def role_check(client, member):
         roles = Bot.guilds[member.guild.id]['roles']
-        regions = Bot.guilds[member.guild.id]['regions']
         if str(member.id) not in Bot.users:
             Bot.users[str(member.id)] = {
                'stripe_id': None,
@@ -97,7 +96,7 @@ class Bot(discord.Client):
             log.info('Removed `{}` role from `{}`.'.format(
                 args.guest_role.title(), member.display_name))
         else:
-            for region in regions:
+            for region in Bot.guilds[member.guild.id]['regions']:
                 region_subscriber_role = roles[
                     region + '-' + args.subscriber_role]
                 if ((Bot.users[str(member.id)]['plan'] is not None or
@@ -406,9 +405,9 @@ class Bot(discord.Client):
                     stripe_channel = channel
                     break
             for role in guild.roles:
-                Bot.guilds[guild.id][roles][role.name.lower()] = role
+                Bot.guilds[guild.id]['roles'][role.name.lower()] = role
                 if role.name.lower().endswith('-' + args.subscriber_role):
-                    Bot.guilds[guild.id][regions].append(
+                    Bot.guilds[guild.id]['regions'].append(
                         role.name.lower().replace(
                             '-' + args.subscriber_role, ''))
         changed = False
@@ -423,6 +422,7 @@ class Bot(discord.Client):
         await Bot.guest_check(self, q, stripe_channel)
 
     async def on_member_join(self, member):
+        roles = Bot.guilds[member.guild.id]['roles']
         if (str(member.id) in Bot.users and
                 Bot.users[str(member.id)]['plan'] == args.premium_role):
             await member.add_roles(roles[args.premium_role])
