@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import configargparse
+import json
 
 logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
@@ -123,6 +124,7 @@ def get_args():
     args = parser.parse_args()
 
     return args
+
 
 class Dicts(object):
 

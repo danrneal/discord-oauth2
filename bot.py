@@ -461,13 +461,14 @@ class Bot(discord.Client):
             await Bot.role_check(self, after)
 
     async def on_member_remove(self, member):
-        if Dicts.users[str(member.id)]['stripe_id'] is not None:
-            Dicts.users[str(member.id)]['guilds'].remove(member.guild.id)
-            log.info('Removed `{}` from the server dict.'.format(
-                member.display_name))
-        else:
+        if (Dicts.users[str(member.id)]['strip_id'] is None and
+                len(Dicts.users[str(member.id)]['guilds']) <= 1):
             Dicts.users.pop(str(member.id))
             log.info('Removed `{}` from  dict.'.format(
+                member.display_name))
+        else
+            Dicts.users[str(member.id)]['guilds'].remove(member.guild.id)
+            log.info('Removed `{}` from the server dict.'.format(
                 member.display_name))
 
     async def on_message(self, message):

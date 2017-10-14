@@ -41,7 +41,8 @@ for customer in customers.auto_paging_iter():
         if discord_id not in Dicts.users:
             Dicts.users[discord_id] = {'guilds': []}
         Dicts.users['stripe_id'] = customer['id']
-        Dicts.users['plan'] = customer['subscriptions']['data'][0]['plan']['id']
+        Dicts.users['plan'] = customer['subscriptions']['data'][0]['plan'][
+            'id']
 
 
 def checker(token):
