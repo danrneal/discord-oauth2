@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import threading
 import discord
 import asyncio
 import json
@@ -14,7 +13,7 @@ logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
     level=logging.INFO
 )
-log = logging.getLogger(threading.current_thread().name)
+log = logging.getLogger('Bot')
 logging.getLogger("discord").setLevel(logging.ERROR)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 logging.getLogger("requests").setLevel(logging.ERROR)
@@ -138,7 +137,7 @@ class Bot(discord.Client):
             payload = q.get()
             member = discord.utils.get(
                 client.get_all_members(),
-                id=payload['discord_id']
+                id=int(payload['discord_id'])
             )
             if payload['event'] == 'charge.succeeded':
                 if 'area' not in payload:
@@ -373,7 +372,7 @@ class Bot(discord.Client):
                     log.info('Unable to send `{}` message to `{}`'.format(
                         em.title, member.display_name))
             q.task_done()
-        await Bot.guest_check(client)
+        await Bot.guest_check(client, q, stripe_channel)
 
     async def on_ready(self):
         for guild in self.guilds:
