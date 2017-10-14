@@ -120,6 +120,7 @@ class Bot(discord.Client):
 
     async def guest_check(client, q, stripe_channel):
         guests = {}
+        roles = Bot.guilds[member.guild.id]['roles']
         for member in client.get_all_members():
             if roles[args.guest_role] in member.roles:
                 time_left = round(args.trial_time - (
