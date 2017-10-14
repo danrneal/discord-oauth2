@@ -32,7 +32,7 @@ class Bot(discord.Client):
                'guilds': []
             }
         if Dicts.users[str(member.id)]['stripe_id'] is None:
-            if roles[args.premium_role] >= member.top_role:
+            if roles[args.premium_role] <= member.top_role:
                 Dicts.users[str(member.id)]['plan'] = args.premium_role
             elif roles[args.standard_role] in member.roles:
                 Dicts.users[str(member.id)]['plan'] = args.standard_role
