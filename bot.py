@@ -6,58 +6,75 @@ import threading
 import discord
 import asyncio
 import json
-import oauth2.dicts as dicts
 from queue import Queue
 from datetime import datetime, timedelta
-from utils import get_path, get_args
+from utils import get_path, get_args, Dicts
 
 logging.basicConfig(
     format='[%(name)10.10s][%(levelname)8.8s] %(message)s',
     level=logging.INFO
 )
-log = logging.getLogger(threading.current_thread().name)
+log = logging.getLogger('Bot')
 logging.getLogger("discord").setLevel(logging.ERROR)
 logging.getLogger("websockets").setLevel(logging.ERROR)
 logging.getLogger("requests").setLevel(logging.ERROR)
 
 args = get_args()
-roles = {}
-regions = []
 
 
 class Bot(discord.Client):
 
+    users = {}
+    guilds = {}
+    try:
+        with open(get_path('dicts/expired.json')) as expired_file:
+            expired = json.load(expired_file)
+    except:
+        expired = []
+    try:
+        with open(get_path('dicts/guest_expired_msg.txt')) as msg_file:
+            guest_expired_msg = msg_file.read()
+    except:
+        guest_expired_msg = "Guest Trial has expired."
+    try:
+        with open(get_path('dicts/guest_used_msg.txt')) as msg_file:
+            guest_used_msg = msg_file.read()
+    except:
+        guest_used_msg = (
+            "Our records indicate that you have alerady used your free trial."
+        )
+
     async def role_check(client, member):
-        if str(member.id) not in dicts.user_info:
-            dicts.user_info[str(member.id)] = {
-                'stripe_id': None,
-                'guilds': []
+        roles = Bot.guilds[member.guild.id]['roles']
+        regions = Bot.guilds[member.guild.id]['regions']
+        if str(member.id) not in Bot.users
+           Bot.users[str(member.id)] = {
+               'stripe_id': None,
+               'guilds': []
             }
-        if member.guild.id not in dicts.user_info[str(member.id)]['guilds']:
-            dicts.user_info[str(member.id)]['guilds'].append(member.guild.id)
-        if dicts.user_info[str(member.id)]['stripe_id'] is None:
-            if member.top_role >= roles[args.premium_role]:
-                dicts.user_info[str(member.id)]['plan'] = args.premium_role
+        if Bot.users[str(member.id)]['stripe_id'] is None:
+            if roles[args.premium_role] >= member.top_role:
+                user['plan'] = args.premium_role
             elif roles[args.standard_role] in member.roles:
-                dicts.user_info[str(member.id)]['plan'] = args.standard_role
+                user['plan'] = args.standard_role
             else:
-                dicts.user_info[str(member.id)]['plan'] = None
-        if (dicts.user_info[str(member.id)]['plan'] == args.premium_role and
-                member.top_role < roles[args.premium_role]):
+                user['plan'] = None
+        if (Bot.users[str(member.id)]['plan'] == args.premium_role and
+                roles[args.premium_role] > member.top_role):
             await member.add_roles(roles[args.premium_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.premium_role.title(), member.display_name))
-        elif (dicts.user_info[str(member.id)]['plan'] != args.premium_role and
+        elif (Bot.users[str(member.id)]['plan'] != args.premium_role and
               roles[args.premium_role] in member.roles):
             await member.remove_roles(roles[args.premium_role])
             log.info('Removed `{}` role from `{}`.'.format(
                 args.premium_role.title(), member.display_name))
-        elif (dicts.user_info[str(member.id)]['plan'] == args.standard_role and
+        elif (Bot.users[str(member.id)]['plan'] == args.standard_role and
               roles[args.standard_role] not in member.roles):
             await member.add_roles(roles[args.standard_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.standard_role.title(), member.display_name))
-        elif (dicts.user_info[str(member.id)]['plan'] != args.standard_role and
+        elif (Bot.users[str(member.id)]['plan'] != args.standard_role and
               roles[args.standard_role] in member.roles):
             await member.remove_roles(roles[args.standard_role])
             log.info('Removed `{}` role from `{}`.'.format(
@@ -74,7 +91,7 @@ class Bot(discord.Client):
             await member.remove_roles(roles[args.subscriber_role])
             log.info('Removed `{}` role from `{}`.'.format(
                 args.subscriber_role.title(), member.display_name))
-        elif (dicts.user_info[str(member.id)]['plan'] is not None and
+        elif (Bot.users[str(member.id)]['plan'] is not None and
               roles[args.guest_role] in member.roles):
             await member.remove_roles(roles[args.guest_role])
             log.info('Removed `{}` role from `{}`.'.format(
@@ -83,7 +100,7 @@ class Bot(discord.Client):
             for region in regions:
                 region_subscriber_role = roles[
                     region + '-' + args.subscriber_role]
-                if ((dicts.user_info[str(member.id)]['plan'] is not None or
+                if ((Bot.users[str(member.id)]['plan'] is not None or
                      roles[args.guest_role] in member.roles) and
                     roles[region] in member.roles and
                         region_subscriber_role not in member.roles):
@@ -92,7 +109,7 @@ class Bot(discord.Client):
                         region_subscriber_role.name.title(),
                         member.display_name
                     ))
-                elif (((dicts.user_info[str(member.id)]['plan'] is None and
+                elif (((Bot.users[str(member.id)]['plan'] is None and
                         roles[args.guest_role] not in member.roles) or
                        roles[region] not in member.roles) and
                       region_subscriber_role in member.roles):
@@ -113,7 +130,7 @@ class Bot(discord.Client):
                 else:
                     await member.remove_roles(roles[args.guest_role])
                     try:
-                        await member.send(dicts.guest_expired_msg)
+                        await member.send(Bot.guest_expired_msg)
                         log.info((
                             'Removed `{}` role from `{}` and sent guest ' +
                             'expired message.'
@@ -125,8 +142,9 @@ class Bot(discord.Client):
                         ).format(args.guest_role.title(), member.display_name))
         log.info('Waiting `{}` seconds for next guest check.'.format(
             min(min(guests) + 5, args.trial_time)))
-        await Bot.webhook(client, q, stripe_channel,
-                          min(min(guests) + 5, args.trial_time))
+        await Bot.webhook(
+            client, q, stripe_channel, min(min(guests) + 5, args.trial_time)
+        )
 
     async def webhook(client, q, stripe_channel, wait_time):
         end_time = datetime.utcnow() + timedelta(seconds=wait_time)
@@ -356,7 +374,7 @@ class Bot(discord.Client):
                         '\n\n**Id**\n' + str(member.id) +
                         '\n\n**Amount**\n${:,.2f}'.format(
                             payload['amount']/100) +
-                        '\n\n**Date**\n' + str(datetime.date(
+                        '\n\n**Automatic Renewal Date**\n' + str(datetime.date(
                             datetime.now() + timedelta(days=3))) +
                         '\n\n' + str(datetime.time(datetime.now().replace(
                             microsecond=0)))
@@ -377,59 +395,69 @@ class Bot(discord.Client):
 
     async def on_ready(self):
         for guild in self.guilds:
-            dicts.queues[guild.id] = Queue()
-            q = dicts.queues[guild.id]
+            Bot.guilds[guild.id] = {
+                'q': Queue(),
+                'roles': {},
+                'regions': []
+            }
+            q = Bot.guilds[guild.id]['q']
             for channel in guild.channels:
                 if channel.id in args.stripe_channels:
                     stripe_channel = channel
                     break
             for role in guild.roles:
-                roles[role.name.lower()] = role
+                Bot.guilds[guild.id][roles][role.name.lower()] = role
                 if role.name.lower().endswith('-' + args.subscriber_role):
-                    regions.append(role.name.lower().replace(
-                        '-' + args.subscriber_role, ''))
-        count = 0
+                    Bot.guilds[guild.id][regions].append(
+                        role.name.lower().replace(
+                            '-' + args.subscriber_role, ''))
+        changed = False
         for member in self.get_all_members():
-            if str(member.id) not in dicts.expired:
-                dicts.expired.append(str(member.id))
-                count += 1
+            if str(member.id) not in Bot.expired:
+                Bot.expired.append(str(member.id))
+                changed = True
             await Bot.role_check(self, member)
-        if count > 0:
+        if changed is True:
             with open(get_path('dicts/expired.json'), 'w') as expired_file:
-                json.dump(dicts.expired, expired_file, indent=4)
+                json.dump(Bot.expired, expired_file, indent=4)
         await Bot.guest_check(self, q, stripe_channel)
 
     async def on_member_join(self, member):
-        if (str(member.id) in dicts.user_info and
-                dicts.user_info['plan'] == args.premium_role):
+        if (str(member.id) in Bot.users and
+            Bot.users[str(member.id)]['plan'] == args.premium_role):
             await member.add_roles(roles[args.premium_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.premium_role, member.display_name))
-            if str(member.id) not in dicts.expired:
-                dicts.expired.append(str(member.id))
+            if str(member.id) not in Bot.expired:
+                Bot.expired.append(str(member.id))
                 with open(get_path('dicts/expired.json'), 'w') as expired_file:
-                    json.dump(dicts.expired, expired_file, indent=4)
-        elif (str(member.id) in dicts.user_info and
-                dicts.user_info['plan'] == args.standard_role):
+                    json.dump(Bot.expired, expired_file, indent=4)
+        elif (str(member.id) in Bot.users and
+              Bot.users[str(member.id)]['plan'] == args.standard_role):
             await member.add_roles(roles[args.standard_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.standard_role, member.display_name))
-            if str(member.id) not in dicts.expired:
-                dicts.expired.append(str(member.id))
+            if str(member.id) not in Bot.expired:
+                Bot.expired.append(str(member.id))
                 with open(get_path('dicts/expired.json'), 'w') as expired_file:
-                    json.dump(dicts.expired, expired_file, indent=4)
-        elif (str(member.id) not in dicts.user_info and
-                str(member.id) not in dicts.expired):
+                    json.dump(Bot.expired, expired_file, indent=4)
+        elif (str(member.id) not in Bot.users and
+              str(member.id) not in Bot.expired):
             await member.add_roles(roles[args.guest_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.guest_role, member.display_name))
-            if str(member.id) not in dicts.expired:
-                dicts.expired.append(str(member.id))
+            if str(member.id) not in Bot.expired:
+                Bot.expired.append(str(member.id))
                 with open(get_path('dicts/expired.json'), 'w') as expired_file:
-                    json.dump(dicts.expired, expired_file, indent=4)
+                    json.dump(Bot.expired, expired_file, indent=4)
         else:
+            Bot.users[str(member.id)] = {
+               'stripe_id': None,
+               'guilds': [member.guild.id],
+               'plan': None
+            }
             try:
-                await member.send(dicts.guest_used_msg)
+                await member.send(Bot.guest_used_msg)
                 log.info('Sent `{}` guest used message.'.format(
                     member.display_name))
             except:
@@ -452,16 +480,14 @@ class Bot(discord.Client):
             await Bot.role_check(self, after)
 
     async def on_member_remove(self, member):
-        if str(member.id) in dicts.user_info:
-            if (dicts.user_info[str(member.id)]['stripe_id'] is not None or
-                    len(dicts.user_info[str(member.id)]['guilds']) > 1):
-                dicts.user_info['guilds'].remove(str(member.guild.id))
-                log.info('Removed `{}` from the server dict.'.format(
-                    member.display_name))
-            else:
-                dicts.user_info.pop(str(member.id))
-                log.info('Removed `{}` from  dict.'.format(
-                    member.display_name))
+        if Bot.users[str(member.id)]['stripe_id'] is not None:
+            Bot.users[str(member.id)]['guilds'].remove(member.guild.id)
+            log.info('Removed `{}` from the server dict.'.format(
+                member.display_name))
+        else:
+            Bot.users.pop(str(member.id))
+            log.info('Removed `{}` from  dict.'.format(
+                member.display_name))
 
     async def on_message(self, message):
         if message.content.lower() == 'ping':
