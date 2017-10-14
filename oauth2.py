@@ -47,7 +47,7 @@ for customer in customers.auto_paging_iter():
 def checker(token):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    client = bot.Bot(loop=loop)
+    client = Bot(loop=loop)
     loop.run_until_complete(client.login(token))
     loop.run_until_complete(client.connect())
 
@@ -132,7 +132,7 @@ def subscribe():
     from_login = (request.referrer is not None and
                   request.referrer.startswith(
                       'https://discordapp.com/oauth2/authorize'))
-    try:            
+    try:
         if (user.get('code') == 0 or
             from_login is False and
             'coupon' not in request.args and
@@ -441,7 +441,7 @@ def unsubscribed():
     if (request.args['id'] in Bot.users and
             Bot.users[request.args['id']]['stripe_id'] is not None):
         customer = stripe.Customer.retrieve(
-            dicts.user_info[request.args['id']]['stripe_id'])
+            Bot.users[request.args['id']]['stripe_id'])
         subscription = stripe.Subscription.retrieve(
             customer.subscriptions['data'][0]['id'])
         if subscription.cancel_at_period_end is False:

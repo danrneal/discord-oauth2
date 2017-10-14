@@ -47,8 +47,8 @@ class Bot(discord.Client):
     async def role_check(client, member):
         roles = Bot.guilds[member.guild.id]['roles']
         regions = Bot.guilds[member.guild.id]['regions']
-        if str(member.id) not in Bot.users
-           Bot.users[str(member.id)] = {
+        if str(member.id) not in Bot.users:
+            Bot.users[str(member.id)] = {
                'stripe_id': None,
                'guilds': []
             }
@@ -424,7 +424,7 @@ class Bot(discord.Client):
 
     async def on_member_join(self, member):
         if (str(member.id) in Bot.users and
-            Bot.users[str(member.id)]['plan'] == args.premium_role):
+                Bot.users[str(member.id)]['plan'] == args.premium_role):
             await member.add_roles(roles[args.premium_role])
             log.info('Added `{}` role to `{}`.'.format(
                 args.premium_role, member.display_name))
