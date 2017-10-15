@@ -4,14 +4,14 @@
   <title>AlphaPokes</title>
   <style type="text/css" media="screen">
     .top {
-      <!-- background: url("/oauth2/static/banner_top.png"); -->
+      <!-- background: url("/Discord-OAuth2/static/banner_top.png"); -->
       background-size: 100% 219px;
       background-repeat: no-repeat;
       margin: -8px;
     }
 
     .bottom {
-      <!-- background: url("/oauth2/static/banner_bottom.png"); -->
+      <!-- background: url("/Discord-OAuth2/static/banner_bottom.png"); -->
       background-size: 100% 196px;
       background-repeat: no-repeat;
       margin: -10px;
@@ -49,7 +49,7 @@
 <body>
   <div class="top">
     <div class="content">
-      <!-- <img src="/oauth2/static/logo.png" alt="Logo"> -->
+      <!-- <img src="/Discord-OAuth2/static/logo.png" alt="Logo"> -->
     </div>
   </div>
   <div>
@@ -67,7 +67,7 @@
   <br>
   <div class="bottom">
     <div class="content">
-      <!-- <img src="/oauth2/static/footer.png" alt="footer"> -->
+      <!-- <img src="/Discord-OAuth2/static/footer.png" alt="footer"> -->
     </div>
   </div>
 </body>

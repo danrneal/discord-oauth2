@@ -10,7 +10,7 @@
 
       <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
               data-key="{{ key }}"
-              <!-- data-image="/oauth2/static/logo.png" -->
+              <!-- data-image="/Discord-OAuth2/static/logo.png" -->
               <!-- data-name="" -->
               data-description="One-Time Payment"
               data-amount="{{ amount }}"
