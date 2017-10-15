@@ -60,6 +60,7 @@
         <p>[Placeholder] does not ever store nor receive any sensitive customer credit card information.  All of our credit card processing is managed by Stripe, a PCI Level 1 Compliant Service Provider.</p>
         <a href=https://stripe.com/docs/security/stripe>https://stripe.com/docs/security/stripe</a>
         <p>[Placeholder] is not associated with Niantic, ThePokemonCompany, or any of it's subsidiaries.</p>
+        <p>All spawn locations are crowd-sourced by the community.</p>
       </div>
     </div>
   </div>
