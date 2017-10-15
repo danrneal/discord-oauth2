@@ -435,6 +435,7 @@ def success():
                 'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN ' +
                 'ADMINISTRATOR'
             )
+    return redirect('https://discordapp.com/channels/@me')
 
 
 @app.route('/subscribe/unsubscribed', methods=['POST'])
@@ -527,6 +528,8 @@ def webhooks():
         }
         if event.data['object']['cancel_at_period_end'] is True:
             payload['type'] = 'canceled'
+        elif 'plan' not in event.data['previous_attributes']:
+            payload = None
         elif payload['plan'] != event.data['previous_attributes']['plan'][
                 'name']:
             payload['old_plan'] = event.data['previous_attributes']['plan'][
