@@ -449,10 +449,10 @@ class Bot(discord.Client):
                 await discord.utils.get(
                     self.get_all_members(),
                     id=admin
-                ).send(
+                ).send((
                     '`{}` joined the server but was not assigned the guest ' +
                     'role since they have been here before.'
-                ).format(member.display_name)
+                ).format(member.display_name))
             log.info('Messaged admins on `{}` join.'.format(
                 member.display_name))
             await Bot.role_check(self, member)
