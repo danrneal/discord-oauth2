@@ -1,17 +1,14 @@
-OAUTH2_CLIENT_ID:													##bot client id
-OAUTH2_CLIENT_SECRET:												##bot client secret
-OAUTH2_REDIRECT_URI: 												##bot redirect uri
-STRIPE_SECRET_KEY: 													##stripe private key
-STRIPE_PUBLISHABLE_KEY: 											##stripe public key
-STRIPE_WEBHOOK_KEY: 												##stripe webhook key
-bot_tokens: 														##list of bot tokens
-guest_role:															##name for free trial role
-subscriber_role:													##role name for all subscribers
-premium_role:														##role name for premium subscribers
-standard_role: 														##role name for non-premium subscribers
-premium_price: 														##price for premium subscription in cents
-standard_price: 													##price for standard subscription in cents
-stripe_channels: 													##channel ids for stripe to post webhooks to
-statement_descriptor: 												##statement descriptor for one-time charges in stripe
-trial_time: 														##length of free trial in seconds
-admin_ids: 															##admin ids
+OAUTH2_CLIENT_ID:				##bot client id
+OAUTH2_CLIENT_SECRET:				##bot client secret
+OAUTH2_REDIRECT_URI: 				##bot redirect uri
+bot_tokens: 					##list of bot tokens
+STRIPE_SECRET_KEY: 				##stripe private key
+STRIPE_PUBLISHABLE_KEY: 			##stripe public key
+STRIPE_WEBHOOK_KEY: 				##stripe webhook key
+statement_descriptor: 				##statement descriptor for one-time charges in stripe
+standard_role: 					##role name for non-premium subscribers
+premium_role:					##role name for premium subscribers
+premium_price: 					##price for premium subscription in cents
+stripe_channels: 				##channel ids for stripe to post webhooks to
+user_info_channels:                             ##channel ids for user info to be posted to
+invite_code:                                    ##invite code for users to be added to the server with

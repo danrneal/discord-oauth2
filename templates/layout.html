@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AlphaPokes</title>
+  <title>TallyPokeMap</title>
   <style type="text/css" media="screen">
     .top {
-      <!-- background: url("/Discord-OAuth2/static/banner_top.png"); -->
-      background-size: 100% 219px;
+      background: url("/Discord-OAuth2/static/banner_top.png");
+      background-size: 100% 440px;
       background-repeat: no-repeat;
       margin: -8px;
     }
 
     .bottom {
-      <!-- background: url("/Discord-OAuth2/static/banner_bottom.png"); -->
+      background: url("/Discord-OAuth2/static/banner_bottom.png");
       background-size: 100% 196px;
       background-repeat: no-repeat;
       margin: -10px;
@@ -49,26 +49,21 @@
 <body>
   <div class="top">
     <div class="content">
-      <!-- <img src="/Discord-OAuth2/static/logo.png" alt="Logo"> -->
+      <img src="/Discord-OAuth2/static/logo_main.png" alt="Logo">
     </div>
   </div>
   <div>
     <div class="content">
       {% block content %}{% endblock %}
       <br>
+      <hr>
       <div class="fineprint">
-        <p>[Placeholder] does not ever store nor receive any sensitive customer credit card information.  All of our credit card processing is managed by Stripe, a PCI Level 1 Compliant Service Provider.</p>
+        <p>TallyPokeMap does not ever store nor receive any sensitive customer credit card information.  All of our credit card processing is managed by Stripe, a PCI Level 1 Compliant Service Provider.</p>
         <a href=https://stripe.com/docs/security/stripe>https://stripe.com/docs/security/stripe</a>
-        <p>[Placeholder] is not associated with Niantic, ThePokemonCompany, or any of it's subsidiaries.</p>
-        <p>All spawn locations are crowd-sourced by the community.</p>
+        <p>Please do not redistribute our data outside of the TallyPokeMap Discord. Due to the nature of these services, there are no guarantees or refunds for donations.</p>
+        <p>TallyPokeMap is not associated with Niantic, ThePokemonCompany, or any of it's subsidiaries.</p>
+        <p>All spawn locations are "crowd-sourced" by the community.</p>
       </div>
-    </div>
-  </div>
-  <br>
-  <br>
-  <div class="bottom">
-    <div class="content">
-      <!-- <img src="/Discord-OAuth2/static/footer.png" alt="footer"> -->
     </div>
   </div>
 </body>

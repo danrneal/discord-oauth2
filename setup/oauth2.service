@@ -7,7 +7,7 @@ User=root
 Group=www-data
 WorkingDirectory=/var/www/html/PMSF/Discord-OAuth2
 Environment="PATH=/var/www/html/PMSF/Discord-OAuth2/env/bin"
-ExecStart=/var/www/html/PMSF/Discord-OAuth2/env/bin/gunicorn --bind unix:oauth2.sock -m 007 wsgi:app
+ExecStart=/var/www/html/PMSF/Discord-OAuth2/env/bin/gunicorn wsgi:app --timeout 120 --bind unix:oauth2.sock
 
 [Install]
 WantedBy=multi-user.target

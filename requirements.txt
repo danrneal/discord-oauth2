@@ -1,6 +1,6 @@
-stripe
+configargparse
+git+https://github.com/Rapptz/discord.py@rewrite
 flask
 gunicorn
-configargparse
 requests_oauthlib
-git+https://github.com/Rapptz/discord.py@rewrite
+stripe

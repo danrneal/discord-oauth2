@@ -1,0 +1,11 @@
+<!doctype html>
+<html>
+<head>
+  <script src='//cdn.jsdelivr.net/fingerprintjs2/1.5.1/fingerprint2.min.js'></script>
+  <script>
+    var fp = new Fingerprint2().get(function(result) {
+      window.location.href = "/subscribe?origin={{ origin }}&fp=" + result + ""
+    });
+  </script>
+</head>
+</html>

@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block content %}
+
+  <div>
+    <p style="color: red">{{ msg }}</p>
+  </div>
+
+  <div>
+    <h1>TallyPokeMap</h1>
+  </div>
+
+  <div>
+    <div>
+      <h2>Gold Star Status</h2>
+      <p>Access to the live map and to Discord pokemon subscriptions.</p>
+
+      <form action="/subscribe/success?id={{ id }}&plan=gold+star+trainers" method="post">
+
+        <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                data-key="{{ key }}"
+                data-image="/Discord-OAuth2/static/logo_small.png"
+                data-name="TallyPokeMap"
+                data-description="Gold Star Status"
+                data-amount="{{ amt }}"
+                data-locale="auto"
+                data-zip-code="true"
+                data-panel-label="Subscribe"
+                data-email="{{ email }}"
+                data-label="$2.99/mo"></script>
+      </form>
+    </div>
+
+  <br>
+  <hr>
+
+  <div>
+    <h1>Tip Jar</h1>
+    <form class="left">
+      <article>
+        <label>
+          <span>AMOUNT:</span>
+        </label>
+      </article>
+      <input type="text" name="amount">
+      <article>
+        <label>
+          <span>MESSAGE:</span>
+        </label>
+      </article>
+      <input type="text" name="message"><br><br>
+      <input type="hidden" name="fp" value="{{ fp }}">
+      <input type="submit">
+    </form>
+  </div>
+
+  <br>
+  <hr>
+
+  <div>
+    <p>Service can be cancelled at any time by clicking the button below.</p>
+    <form action="/subscribe/unsubscribed?id={{ id }}" method="post">
+      <input type="submit" value="Unsubscribe">
+    </form>
+  </div>
+
+{% endblock %}
