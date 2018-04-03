@@ -23,8 +23,8 @@ filehandler = logging.handlers.TimedRotatingFileHandler(
 consolehandler = logging.StreamHandler()
 logging.basicConfig(
     format=(
-        '%(asctime)s [%(processName)15.15s][%(name)10.10s]' +
-        '[%(levelname)8.8s] %(message)s'
+        '%(asctime)s [%(processName)15.15s][%(name)10.10s][%(levelname)8.8s] '
+        '%(message)s'
     ),
     level=logging.INFO,
     handlers=[filehandler, consolehandler]
@@ -154,16 +154,16 @@ def subscribe():
         )
         log.info("New fingerprint found, storing cookie")
         con.commit()
-    elif (session['user_ids'] != json.loads(fp_dict[0]) or
-          session['oauth2_state'] != fp_dict[1] or
-          session['oauth2_token'] != json.loads(fp_dict[2])):
+    elif (session.get('user_ids') != json.loads(fp_dict[0]) or
+          session.get('oauth2_state') != fp_dict[1] or
+          session.get('oauth2_token') != json.loads(fp_dict[2])):
         cur.execute(
             'UPDATE fingerprints '
             'SET user_ids = ?, oauth2_state = ?, oauth2_token = ? '
             'WHERE fingerprint = ?',
             (
-                json.dumps(user_ids), session['oauth2_state'],
-                json.dumps(session['oauth2_token']), fp
+                json.dumps(user_ids), session.get('oauth2_state'),
+                json.dumps(session.get('oauth2_token')), fp
             )
         )
         log.info('Updated fingerprint')
@@ -434,22 +434,21 @@ def success():
                 con.close()
                 customer.delete()
                 log.error((
-                    'Deleted {} since their card was declined on ' +
-                    'signup'
+                    'Deleted {} since their card was declined on signup'
                 ).format(user))
                 return 'CARD DECLINED'
             except Exception as e:
                 con.close()
                 customer.delete()
                 log.error((
-                    'Deleted {} since there was an error while ' +
-                    'processing their card on signup'
+                    'Deleted {} since there was an error while processing '
+                    'their card on signup'
                 ).format(user))
                 log.error("{} encountered error ({}: {})".format(
                     user, type(e).__name__, e))
                 return (
-                    'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR ' +
-                    'CONTACT AN ADMINISTRATOR'
+                    'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN '
+                    'ADMINISTRATOR'
                 )
         else:
             subscription = stripe.Subscription.retrieve(
@@ -504,7 +503,7 @@ def success():
             log.error("{} encountered error ({}: {})".format(
                 user, type(e).__name__, e))
             return (
-                'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN ' +
+                'SOME ERROR HAPPENED, PLEASE TRY AGAIN OR CONTACT AN '
                 'ADMINISTRATOR'
             )
     return redirect('https://discordapp.com/channels/@me')
@@ -876,8 +875,8 @@ def start_bots(args):
             queues.append(b.get_queue())
         else:
             log.critical(
-                "Names of Bot processes must be unique (not case " +
-                "sensitive)! Process will exit."
+                "Names of Bot processes must be unique (not case sensitive)! "
+                "Process will exit."
             )
             sys.exit(1)
     log.info("Starting up the Bots")
