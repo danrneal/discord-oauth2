@@ -153,31 +153,40 @@ class Bot(discord.Client):
                 if 'message' not in payload:
                     em = discord.Embed(
                         title='\U0001f4b5 Payment Successful!',
-                        description=(
-                            str(member) +
-                            '\n\n**Id**\n' + payload['discord_id'] +
-                            '\n\n**Amount**\n${:,.2f}'.format(
-                                payload['amount']/100) +
-                            '\n\n' + str(datetime.time(datetime.now().replace(
-                                microsecond=0)))
-                        ),
+                        description=str(member),
                         color=int('0x71cd40', 16)
+                    )
+                    em.add_field(
+                        name='Id',
+                        value=payload['discord_id']
+                    )
+                    em.add_field(
+                        name='Amount',
+                        value='${:,.2f}'.format(payload['amount'] / 100)
+                    )
+                    em.set_footer(
+                        text=str(datetime.now().strftime(
+                            "%m/%d/%Y at %I:%M %p"))
                     )
                     await self.send_msg(
                         em, member, ['stripe_channel', 'member'])
                 else:
                     em = discord.Embed(
                         title=u"\U0001F4B0" + ' One-Time Charge Successful!',
-                        description=(
-                            str(member) +
-                            '\n\n**Id**\n' + payload['discord_id'] +
-                            '\n\n**Amount**\n${:,.2f}'.format(
-                                payload['amount']/100) +
-                            '\n\n**Message**\n' + payload['message'] +
-                            '\n\n' + str(datetime.time(datetime.now().replace(
-                                microsecond=0)))
-                        ),
+                        description=str(member),
                         color=int('0x71cd40', 16)
+                    )
+                    em.add_field(
+                        name='Id',
+                        value=payload['discord_id']
+                    )
+                    em.add_field(
+                        name='Amount',
+                        value='${:,.2f}'.format(payload['amount']/100)
+                    )
+                    em.set_footer(
+                        text=str(datetime.now().strftime(
+                            "%m/%d/%Y at %I:%M %p"))
                     )
                     await self.send_msg(
                         em, member, ['stripe_channel', 'member'])
@@ -186,14 +195,19 @@ class Bot(discord.Client):
                     await self.role_check(member)
                 em = discord.Embed(
                     title=u"\u2705" + ' Subscription Created!',
-                    description=(
-                        str(member) +
-                        '\n\n**Id**\n' + payload['discord_id'] +
-                        '\n\n**Plan**\n' + payload['plan'] +
-                        '\n\n' + str(datetime.time(datetime.now().replace(
-                                     microsecond=0)))
-                    ),
+                    description=str(member),
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                em.add_field(
+                    name='Plan',
+                    value=payload['plan']
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['stripe_channel', 'member'])
             elif payload['event'] == 'customer.subscription.deleted':
@@ -201,107 +215,147 @@ class Bot(discord.Client):
                     await self.role_check(member)
                 em = discord.Embed(
                     title=u"\u274C" + ' Subscription Deleted!',
-                    description=(
-                        str(member) +
-                        '\n\n**Id**\n' + payload['discord_id'] +
-                        '\n\n**Plan**\n' + payload['plan'] +
-                        '\n\n' + str(datetime.time(datetime.now().replace(
-                                     microsecond=0)))
-                    ),
-                    color=int('0xee281f', 16)
+                    description=str(member),
+                    color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                em.add_field(
+                    name='Plan',
+                    value=payload['plan']
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['stripe_channel', 'member'])
             elif payload['event'] == 'customer.subscription.updated':
                 if payload['type'] == 'canceled':
                     em = discord.Embed(
                         title='\U0001f494 Subscription Canceled!',
-                        description=(
-                            str(member) +
-                            '\n\n**Id**\n' + payload['discord_id'] +
-                            '\n\n**Plan**\n' + payload['plan'] +
-                            '\n\n' + str(datetime.time(
-                                datetime.now().replace(microsecond=0)))
-                        ),
-                        color=int('0xee281f', 16)
+                        description=str(member),
+                        color=int('0x71cd40', 16)
+                    )
+                    em.add_field(
+                        name='Id',
+                        value=payload['discord_id']
+                    )
+                    em.add_field(
+                        name='Plan',
+                        value=payload['plan']
+                    )
+                    em.set_footer(
+                        text=str(datetime.now().strftime(
+                            "%m/%d/%Y at %I:%M %p"))
                     )
                 else:
                     em = discord.Embed(
                         title=u"\U0001F389" + ' Subscription Reactivated!',
-                        description=(
-                            str(member) +
-                            '\n\n**Id**\n' + payload['discord_id'] +
-                            '\n\n**Plan**\n' + payload['plan'] +
-                            '\n\n' + str(datetime.time(
-                                datetime.now().replace(microsecond=0)))
-                        ),
+                        description=str(member),
                         color=int('0x71cd40', 16)
+                    )
+                    em.add_field(
+                        name='Id',
+                        value=payload['discord_id']
+                    )
+                    em.add_field(
+                        name='Plan',
+                        value=payload['plan']
+                    )
+                    em.set_footer(
+                        text=str(datetime.now().strftime(
+                            "%m/%d/%Y at %I:%M %p"))
                     )
                 await self.send_msg(em, member, ['stripe_channel', 'member'])
             elif payload['event'] == 'customer.updated':
-                descript = (
-                    str(member) +
-                    '\n\n**Id**\n' + payload['discord_id']
-                    )
-                if 'email' in payload:
-                    descript += (
-                        '\n\n**New Email**\n' + payload['email'] +
-                        '\n\n**Old Email**\n' + payload['old_email']
-                    )
-                if 'last4' in payload:
-                    descript += (
-                        '\n\n**New Card**\n' + payload['brand'] + ' ...' +
-                        payload['last4'] +
-                        '\n\n**Exp**\n' + str(payload['exp_month']) + '/' +
-                        str(payload['exp_year'])
-                    )
-                if payload.get('zip') is not None:
-                    descript += '\n\n**ZIP Code**\n' + payload['zip']
-                descript += (
-                    '\n\n' + str(datetime.time(datetime.now().replace(
-                        microsecond=0)))
-                )
                 em = discord.Embed(
                     title='\U0001F4B3 Customer Information Updated!',
-                    description=descript,
+                    description=str(member),
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                if 'email' in payload:
+                    em.add_field(
+                        name='New Email',
+                        value=payload['email']
+                    )
+                    em.add_field(
+                        name='Old Email',
+                        value=payload['old_email']
+                    )
+                if 'last4' in payload:
+                    em.add_field(
+                        name='New Card',
+                        value='{} ...{}'.format(
+                            payload['brand'], payload['last4'])
+                    )
+                    em.add_field(
+                        name='Exp',
+                        value='{}/{}'.format(
+                            payload['exp_month'], payload['exp_year'])
+                    )
+                if payload.get('zip') is not None:
+                    em.add_field(
+                        name='ZIP Code',
+                        value=payload['zip']
+                    )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['member'])
             elif payload['event'] == 'invoice.payment_failed':
-                descript = (
-                    str(member) +
-                    '\n\n**Id**\n' + payload['discord_id'] +
-                    '\n\n**Amount**\n${:,.2f}'.format(payload['amount']/100) +
-                    '\n\n**Attempt**\n' + str(payload['attempt']) + ' of 3'
-                )
-                if payload['next_attempt'] is not None:
-                    descript += (
-                        '\n\n**Next Attempt**\n' +
-                        str(datetime.fromtimestamp(payload['next_attempt']))
-                    )
-                descript += (
-                    '\n\n' + str(datetime.time(datetime.now().replace(
-                        microsecond=0)))
-                )
                 em = discord.Embed(
                     title=u"\u274C" + ' Payment Failed!',
-                    description=descript,
+                    description=str(member),
                     color=int('0xee281f', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                em.add_field(
+                    name='Amount',
+                    value='${:,.2f}'.format(payload['amount']/100)
+                )
+                em.add_field(
+                    name='Attempt',
+                    value='{} of 3'.format(payload['attempt'])
+                )
+                if payload['next_attempt'] is not None:
+                    em.add_field(
+                        name='Next Attempt',
+                        value=str(datetime.fromtimestamp(
+                            payload['next_attempt']))
+                    )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['stripe_channel', 'member'])
             elif payload['event'] == 'invoice.upcoming':
                 em = discord.Embed(
                     title='\U0001f4e8 Payment Upcoming!',
-                    description=(
-                        str(member) +
-                        '\n\n**Id**\n' + payload['discord_id'] +
-                        '\n\n**Amount**\n${:,.2f}'.format(
-                            payload['amount']/100) +
-                        '\n\n**Automatic Renewal Date**\n' + str(datetime.date(
-                            datetime.now() + timedelta(days=3))) +
-                        '\n\n' + str(datetime.time(datetime.now().replace(
-                            microsecond=0)))
-                    ),
+                    description=str(member),
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                em.add_field(
+                    name='Amount',
+                    value='${:,.2f}'.format(payload['amount']/100)
+                )
+                em.add_field(
+                    name='Automatic Renewal Date',
+                    value=str((datetime.now() + timedelta(days=3)).strftime(
+                        "%m/%d/%Y"))
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['member'])
             self.__queue.task_done()
