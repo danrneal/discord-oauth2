@@ -23,11 +23,18 @@ if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     $ip = $_SERVER['REMOTE_ADDR'];
 }
 $db = new SQLite3('Discord-OAuth2/oauth2.db');
-$sql = "DELETE FROM authorized WHERE DATETIME(timestamp) < DATETIME('now', '-30 seconds')";
-$stmt = $db->prepare($sql);
+$query = "DELETE FROM authorized WHERE DATETIME(timestamp) < DATETIME('now', '-30 seconds')";
+$stmt = $db->prepare($query);
 $stmt->execute();
-$sql = "DELETE FROM authorized WHERE ip = :ip";
-$stmt = $db->prepare($sql);
+
+$query = "SELECT user FROM authorized WHERE ip = :ip";
+$stmt = $db->prepare($query);
+$stmt->bindValue(':ip', $ip);
+$result = $stmt->execute();
+$_SESSION['user'] = $result->fetchArray()[0];
+
+$query = "DELETE FROM authorized WHERE ip = :ip";
+$stmt = $db->prepare($query);
 $stmt->bindValue(':ip', $ip, SQLITE3_TEXT);
 $stmt->execute();
 if ($db->changes() == 0) {
@@ -36,4 +43,5 @@ if ($db->changes() == 0) {
 } else {
     $db->close();
 }
+
 ?>

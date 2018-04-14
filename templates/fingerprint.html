@@ -1,11 +1,16 @@
 <!doctype html>
 <html>
-<head>
-  <script src='//cdn.jsdelivr.net/fingerprintjs2/1.5.1/fingerprint2.min.js'></script>
-  <script>
-    var fp = new Fingerprint2().get(function(result) {
-      window.location.href = "/subscribe?origin={{ origin }}&fp=" + result + ""
-    });
-  </script>
-</head>
+  <head>
+    <script type="text/javascript">  
+      if (localStorage.fp) {
+        var fp = localStorage.getItem("fp");
+      } else {
+        var fp = ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+          (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        )
+        localStorage.setItem("fp", fp);
+      }
+      window.location.href = "/subscribe?origin={{ origin }}&fp=" + fp + ""
+    </script>
+  </head>
 </html>

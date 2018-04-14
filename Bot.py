@@ -105,18 +105,6 @@ class Bot(discord.Client):
                     color=int('0x71cd40', 16)
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
-            elif payload['event'] == 'new_device':
-                em = discord.Embed(
-                    title=u"\U0001F195" + ' User logged in with new device!',
-                    description=(
-                        payload['name'] +
-                        '\n\n**Id**\n' + payload['discord_id'] +
-                        '\n\n' + str(datetime.time(datetime.now().replace(
-                            microsecond=0)))
-                    ),
-                    color=int('0x71cd40', 16)
-                )
-                await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'new_user':
                 descript = (
                     payload['name'] +

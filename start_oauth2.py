@@ -100,9 +100,25 @@ def subscribe():
             origin=request.args.get('origin')
         )
     fp = request.args['fp']
-    device_status = None
+    con = sqlite3.connect('oauth2.db')
+    cur = con.cursor()
+    cur.execute(
+        'SELECT oauth2_token, oauth2_state, user_ids '
+        'FROM fingerprints '
+        'WHERE fingerprint = ?',
+        (fp,)
+    )
+    fp_dict = cur.fetchone()
+    if session.get('oauth2_token') is not None:
+        token = session.get('oauth2_token')
+    elif fp_dict is not None and fp_dict[0] is not None:
+        token = json.loads(fp_dict[0])
+    else:
+        con.close()
+        log.error("No token, redirecting to login")
+        return redirect('/login')
     try:
-        discord = make_session(token=session.get('oauth2_token'))
+        discord = make_session(token=token)
         user = discord.get(app.config['API_BASE_URL'] + '/users/@me').json()
         guilds = discord.get(
             app.config['API_BASE_URL'] + '/users/@me/guilds').json()
@@ -112,204 +128,174 @@ def subscribe():
         return redirect('/login')
     if user.get('code') == 0 or type(guilds) == dict:
         return redirect('/login')
-    if session.get('discord_ids') is None:
-        session['discord_ids'] = [user['id']]
-        device_status = 'new'
-    elif user['id'] not in session['discord_ids']:
-        session['discord_ids'].append(user['id'])
+    user_ids = []
+    if session.get('user_ids') is not None:
+        user_ids += session.get('user_ids')
+    if fp_dict is not None and fp_dict[2] is not None:
+        user_ids += json.loads(fp_dict[2])
+    user_ids = list(set(user_ids))
+    device_status = None
+    if len(user_ids) == 0:
+        user_ids = [user['id']]
+    elif user['id'] not in user_ids:
+        user_ids.append(user['id'])
         device_status = 'shared'
-    con = sqlite3.connect('oauth2.db')
-    cur = con.cursor()
-    cur.execute(
-        'SELECT discord_ids, oauth2_state, oauth2_token '
-        'FROM fingerprints '
-        'WHERE fingerprint = ?',
-        (fp,)
-    )
-    fp_dict = cur.fetchone()
+    session['user_ids'] = user_ids
     if fp_dict is None:
         cur.execute(
             'INSERT INTO fingerprints '
-            '(fingerprint, discord_ids, oauth2_state, oauth2_token) '
+            '(fingerprint, user_ids, oauth2_state, oauth2_token) '
             'VALUES (?, ?, ?, ?)',
             (
-                fp, json.dumps(session.get('discord_ids')),
-                session.get('oauth2_state'),
+                fp, json.dumps(user_ids), session.get('oauth2_state'),
                 json.dumps(session.get('oauth2_token'))
             )
         )
         log.info("New fingerprint found, storing cookie")
         con.commit()
-    else:
-        if (session.get('discord_ids') is None or
-            session.get('oauth2_state') is None or
-                session.get('oauth2_token') is None):
-            session['discord_ids'] = json.loads(fp_dict[0])
-            session['oauth2_state'] = fp_dict[1]
-            session['oauth2_token'] = json.loads(fp_dict[2])
-            log.info('Found fingerprint, restoring cookie')
-        elif (session['discord_ids'] != json.loads(fp_dict[0]) or
-              session['oauth2_state'] != fp_dict[1] or
-              session['oauth2_token'] != json.loads(fp_dict[2])):
-            if fp_dict[0] is not None:
-                discord_ids = list(
-                    set(json.loads(fp_dict[0]) + session['discord_ids'])
-                )
-            else:
-                discord_ids = session['discord_ids']
-            cur.execute(
-                'UPDATE fingerprints '
-                'SET discord_ids = ?, oauth2_state = ?, oauth2_token = ? '
-                'WHERE fingerprint = ?',
-                (
-                    json.dumps(discord_ids), session['oauth2_state'],
-                    json.dumps(session['oauth2_token']), fp
-                )
-            )
-            session['discord_ids'] = discord_ids
-            log.info('Updated fingerprint')
-            con.commit()
-    try:
-        username = '{}#{}'.format(user['username'], user['discriminator'])
-        user_guilds = {}
-        for guild in guilds:
-            user_guilds[guild['id']] = guild['name']
-        shared_ids = list(session['discord_ids'])
-        shared_ids.remove(user['id'])
-        user_shared_devices = {}
-        for user_id in shared_ids:
-            cur.execute(
-                'SELECT user, shared_devices, plan '
-                'FROM userInfo '
-                'WHERE discord_id = ?',
-                (user_id,)
-            )
-            user_dict = cur.fetchone()
-            user_shared_devices[user_id] = user_dict[0]
-            if username not in json.loads(user_dict[1]):
-                cur.execute(
-                    'UPDATE userInfo '
-                    'SET shared_devices = json_insert(shared_devices, ?, ?) '
-                    'WHERE discord_id = ?',
-                    ('$.{}'.format(user['id']), username, user_id)
-                )
-            if user_dict[2] in [None, 'Banned']:
-                device_status = 'flagged'
+    elif (session.get('user_ids') != json.loads(fp_dict[0]) or
+          session.get('oauth2_state') != fp_dict[1] or
+          session.get('oauth2_token') != json.loads(fp_dict[2])):
         cur.execute(
-            'SELECT shared_devices, user, guilds, plan '
+            'UPDATE fingerprints '
+            'SET user_ids = ?, oauth2_state = ?, oauth2_token = ? '
+            'WHERE fingerprint = ?',
+            (
+                json.dumps(user_ids), session.get('oauth2_state'),
+                json.dumps(session.get('oauth2_token')), fp
+            )
+        )
+        log.info('Updated fingerprint')
+        con.commit()
+    username = '{}#{}'.format(user['username'], user['discriminator'])
+    user_guilds = {}
+    for guild in guilds:
+        user_guilds[guild['id']] = guild['name']
+    shared_ids = list(session['user_ids'])
+    shared_ids.remove(user['id'])
+    user_shared_devices = {}
+    for user_id in shared_ids:
+        cur.execute(
+            'SELECT user, shared_devices, plan '
             'FROM userInfo '
             'WHERE discord_id = ?',
-            (user['id'],)
+            (user_id,)
         )
         user_dict = cur.fetchone()
-        new_user = False
-        if user_dict is None:
-            new_user = True
-            cur.execute(
-                'INSERT INTO userInfo '
-                '(discord_id, user, shared_devices, guilds, last_login) '
-                'VALUES (?, ?, ?, ?, ?)',
-                (
-                    user['id'], username,
-                    json.dumps(user_shared_devices), json.dumps(user_guilds),
-                    str(datetime.now().replace(microsecond=0))
-                )
-            )
-            new_guilds = list(user_guilds.values())
-            log.info("Added user info for {}".format(username))
-        else:
-            shared_devices = json.loads(user_dict[0])
-            shared_devices.update(user_shared_devices)
+        user_shared_devices[user_id] = user_dict[0]
+        if user['id'] not in json.loads(user_dict[1]):
             cur.execute(
                 'UPDATE userInfo '
-                'SET user = ?, shared_devices = ?, guilds = ?, last_login = ? '
+                'SET shared_devices = json_insert(shared_devices, ?, ?) '
                 'WHERE discord_id = ?',
+                ('$.{}'.format(user['id']), username, user_id)
+            )
+        if user_dict[2] in [None, 'Banned']:
+            device_status = 'flagged'
+    cur.execute(
+        'SELECT shared_devices, user, guilds, plan '
+        'FROM userInfo '
+        'WHERE discord_id = ?',
+        (user['id'],)
+    )
+    user_dict = cur.fetchone()
+    new_user = False
+    if user_dict is None:
+        new_user = True
+        cur.execute(
+            'INSERT INTO userInfo '
+            '(discord_id, user, shared_devices, guilds, last_login) '
+            'VALUES (?, ?, ?, ?, ?)',
+            (
+                user['id'], username, json.dumps(user_shared_devices),
+                json.dumps(user_guilds),
+                str(datetime.now().replace(microsecond=0))
+            )
+        )
+        new_guilds = list(user_guilds.values())
+        log.info("Added user info for {}".format(username))
+    else:
+        shared_devices = json.loads(user_dict[0])
+        shared_devices.update(user_shared_devices)
+        cur.execute(
+            'UPDATE userInfo '
+            'SET user = ?, shared_devices = ?, guilds = ?, last_login = ? '
+            'WHERE discord_id = ?',
+            (
+                username, json.dumps(shared_devices), json.dumps(user_guilds),
+                str(datetime.now().replace(microsecond=0)), user['id']
+            )
+        )
+        if user_dict[1] != username:
+            cur.execute(
+                'UPDATE userInfo '
+                'SET shared_devices = json_replace(shared_devices, ?, ?) '
+                'WHERE json_extract(shared_devices, ?) IS NOT NULL',
                 (
-                    username,
-                    json.dumps(shared_devices), json.dumps(user_guilds),
-                    str(datetime.now().replace(microsecond=0)), user['id']
+                    '$.{}'.format(user['id']), username,
+                    '$.{}'.format(user['id'])
                 )
             )
-            if user_dict[1] != username:
-                cur.execute(
-                    'UPDATE userInfo '
-                    'SET shared_devices = json_replace(shared_devices, ?, ?) '
-                    'WHERE json_extract(shared_devices, ?) IS NOT NULL',
-                    (
-                        '$.{}'.format(user['id']), username,
-                        '$.{}'.format(user['id'])
-                    )
-                )
-            old_guilds = list(json.loads(user_dict[2]).values())
-            new_guilds = list(
-                set(list(user_guilds.values())) - set(old_guilds))
-            log.info('Updated user info for {}'.format(username))
-        con.commit()
-        if len(shared_ids) > 0 and user_dict[3] in [None, 'Banned']:
-            device_status = 'flagged'
-        if new_user:
-            payload = {
-                'name': username,
-                'discord_id': user['id'],
-                'guilds': new_guilds,
-                'event': 'new_user'
-            }
-            for queue in queues:
-                queue.put(payload)
-                queue.join()
-        elif user_dict[3] == 'Banned':
-            payload = {
-                'name': username,
-                'discord_id': user['id'],
-                'event': 'banned'
-            }
-            for queue in queues:
-                queue.put(payload)
-                queue.join()
-        if not new_user:
-            if len(new_guilds) > 0:
-                payload = {
-                    'name': username,
-                    'discord_id': user['id'],
-                    'new_guilds': new_guilds,
-                    'event': 'new_guilds'
-                }
-                for queue in queues:
-                    queue.put(payload)
-                    queue.join()
-            if device_status == 'new':
-                payload = {
-                    'name': username,
-                    'discord_id': user['id'],
-                    'event': 'new_device'
-                }
-                for queue in queues:
-                    queue.put(payload)
-                    queue.join()
-        if device_status != 'new':
-            if device_status == 'shared':
-                payload = {
-                    'name': username,
-                    'discord_id': user['id'],
-                    'shared_with': user_shared_devices.values(),
-                    'event': 'shared_device'
-                }
-                for queue in queues:
-                    queue.put(payload)
-                    queue.join()
-            elif device_status == 'flagged':
-                payload = {
-                    'name': username,
-                    'discord_id': user['id'],
-                    'shared_with': user_shared_devices.values(),
-                    'event': 'flagged_device'
-                }
-                for queue in queues:
-                    queue.put(payload)
-                    queue.join()
-        if (request.args.get('origin') in ['login', 'map'] and
-                not new_user and
-                user_dict[3] == app.config['premium_role']):
+        old_guilds = json.loads(user_dict[2])
+        new_guilds = []
+        for guild_id in user_guilds:
+            if guild_id not in old_guilds:
+                new_guilds.append(user_guilds[guild_id])
+        log.info('Updated user info for {}'.format(username))
+    con.commit()
+    if len(shared_ids) > 0 and user_dict[3] in [None, 'Banned']:
+        device_status = 'flagged'
+    if new_user:
+        payload = {
+            'name': username,
+            'discord_id': user['id'],
+            'guilds': new_guilds,
+            'event': 'new_user'
+        }
+        for queue in queues:
+            queue.put(payload)
+            queue.join()
+    elif user_dict[3] == 'Banned':
+        payload = {
+            'name': username,
+            'discord_id': user['id'],
+            'event': 'banned'
+        }
+        for queue in queues:
+            queue.put(payload)
+            queue.join()
+    if not new_user and len(new_guilds) > 0:
+        payload = {
+            'name': username,
+            'discord_id': user['id'],
+            'new_guilds': new_guilds,
+            'event': 'new_guilds'
+        }
+        for queue in queues:
+            queue.put(payload)
+            queue.join()
+    if device_status == 'shared':
+        payload = {
+            'name': username,
+            'discord_id': user['id'],
+            'shared_with': user_shared_devices.values(),
+            'event': 'shared_device'
+        }
+        for queue in queues:
+            queue.put(payload)
+            queue.join()
+    elif device_status == 'flagged':
+        payload = {
+            'name': username,
+            'discord_id': user['id'],
+            'shared_with': user_shared_devices.values(),
+            'event': 'flagged_device'
+        }
+        for queue in queues:
+            queue.put(payload)
+            queue.join()
+    try:
+        if request.args.get('origin') == 'login':
             if request.headers["X-Forwarded-For"]:
                 ip = request.headers["X-Forwarded-For"].split(',')[0]
             else:
@@ -319,9 +305,9 @@ def subscribe():
                 "WHERE DATETIME(timestamp) < DATETIME('now', '-30 seconds')"
             )
             cur.execute(
-                'INSERT INTO authorized (ip, timestamp) '
-                'VALUES (?, ?)',
-                (ip, str(datetime.now().replace(microsecond=0)))
+                'INSERT INTO authorized (user, ip, timestamp) '
+                'VALUES (?, ?, ?)',
+                (username, ip, str(datetime.now().replace(microsecond=0)))
             )
             con.commit()
             con.close()
@@ -333,9 +319,7 @@ def subscribe():
                     request.args['lat'], request.args['lon']))
             else:
                 return redirect('/')
-        elif (request.args.get('origin') != 'login' and
-              not new_user and
-              user_dict[3] != app.config['premium_role']):
+        elif request.args.get('origin') == 'map':
             con.close()
             return redirect('/login')
         elif not new_user and user_dict[3] == 'Banned':
@@ -472,9 +456,9 @@ def success():
             "WHERE DATETIME(timestamp) < DATETIME('now', '-30 seconds')"
         )
         cur.execute(
-            'INSERT INTO authorized (ip, timestamp) '
-            'VALUES (?, ?)',
-            (ip, str(datetime.now().replace(microsecond=0)))
+            'INSERT INTO authorized (user, ip, timestamp) '
+            'VALUES (?, ?, ?)',
+            (user, ip, str(datetime.now().replace(microsecond=0)))
         )
         con.commit()
         con.close()
@@ -673,10 +657,11 @@ def start_server():
     )
     cur.execute(
         'CREATE TABLE IF NOT EXISTS fingerprints(fingerprint TEXT, '
-        'discord_ids JSON, oauth2_state TEXT, oauth2_token JSON)'
+        'user_ids JSON, oauth2_state TEXT, oauth2_token JSON)'
     )
     cur.execute(
-        'CREATE TABLE IF NOT EXISTS authorized(ip TEXT, timestamp TEXT)'
+        'CREATE TABLE IF NOT EXISTS authorized(user TEXT, ip TEXT, '
+        'timestamp TEXT)'
     )
     parse_settings(con, cur)
     con.close()
@@ -693,7 +678,6 @@ def parse_settings(con, cur):
     parser = configargparse.ArgParser(default_config_files=config_files)
     parser.add_argument(
         '-cf', '--config',
-        is_config_file=True,
         help='Configuration file'
     )
     parser.add_argument(
