@@ -520,7 +520,10 @@ class Bot(discord.Client):
                     self.get_all_members(),
                     id=member_id
                 )
-            con = sqlite3.connect('oauth2.db')
+            con = sqlite3.connect(
+                'oauth2.db',
+                detect_types=sqlite3.PARSE_DECLTYPES
+            )
             cur = con.cursor()
             cur.execute(
                 'SELECT user, plan, guilds, shared_devices, last_login '
@@ -540,25 +543,46 @@ class Bot(discord.Client):
                 await message.delete()
                 log.info('Cannot find user id {}.'.format(member_id))
             else:
-                descript = (
-                    user_dict[0] +
-                    '\n\n**Id**\n' + str(member_id) +
-                    '\n\n**Plan**\n' + str(user_dict[1]) +
-                    '\n\n**Servers**\n```\n'
-                )
-                guilds = json.loads(user_dict[2])
-                for guild_id in guilds:
-                    descript += guilds[guild_id] + '\n'
-                shared_devices = json.loads(user_dict[3])
-                if len(shared_devices) > 0:
-                    descript += '```\n\n**Shared devices with**\n```\n'
-                    for user_id in shared_devices:
-                        descript += shared_devices[user_id] + '\n'
-                descript += '```\n\n**Updated**\n' + user_dict[4]
                 em = discord.Embed(
                     title='User info!',
-                    description=descript,
+                    description=user_dict[0],
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=str(member_id)
+                )
+                em.add_field(
+                    name='Plan',
+                    value=str(user_dict[1])
+                )
+                guilds = json.loads(user_dict[2])
+                servers = '```\n'
+                for guild_id in guilds:
+                    if len(servers) + len(guilds[guild_id]) > 1016:
+                        servers += '...\n'
+                        break
+                    servers += '{}\n'.format(guilds[guild_id])
+                servers += '```'
+                em.add_field(
+                    name='Servers',
+                    value=servers,
+                    inline=False
+                )
+                shared_devices = json.loads(user_dict[3])
+                if len(shared_devices) > 0:
+                    devices = '```\n'
+                    for user_id in shared_devices:
+                        devices += '{}\n'.format(shared_devices[user_id])
+                    devices += '```'
+                    em.add_field(
+                        name='Shared devices with',
+                        value=devices,
+                        inline=False
+                    )
+                em.set_footer(
+                    text='Updated: {}'.format(
+                        user_dict[4].strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 if member is not None:
                     em.set_thumbnail(url=member.avatar_url)

@@ -100,7 +100,10 @@ def subscribe():
             origin=request.args.get('origin')
         )
     fp = request.args['fp']
-    con = sqlite3.connect('oauth2.db')
+    con = sqlite3.connect(
+        'oauth2.db',
+        detect_types=sqlite3.PARSE_DECLTYPES
+    )
     cur = con.cursor()
     cur.execute(
         'SELECT oauth2_token, oauth2_state, user_ids '
@@ -208,8 +211,7 @@ def subscribe():
             'VALUES (?, ?, ?, ?, ?)',
             (
                 user['id'], username, json.dumps(user_shared_devices),
-                json.dumps(user_guilds),
-                str(datetime.now().replace(microsecond=0))
+                json.dumps(user_guilds), datetime.now().replace(microsecond=0)
             )
         )
         new_guilds = list(user_guilds.values())
@@ -223,7 +225,7 @@ def subscribe():
             'WHERE discord_id = ?',
             (
                 username, json.dumps(shared_devices), json.dumps(user_guilds),
-                str(datetime.now().replace(microsecond=0)), user['id']
+                datetime.now().replace(microsecond=0), user['id']
             )
         )
         if user_dict[1] != username:
@@ -307,7 +309,7 @@ def subscribe():
             cur.execute(
                 'INSERT INTO authorized (user, ip, timestamp) '
                 'VALUES (?, ?, ?)',
-                (username, ip, str(datetime.now().replace(microsecond=0)))
+                (username, ip, datetime.now().replace(microsecond=0))
             )
             con.commit()
             con.close()
@@ -371,7 +373,10 @@ def subscribe():
 def success():
     user = request.form['stripeEmail'].split(' - ')[0]
     if request.args['plan'] == app.config['premium_role'].lower():
-        con = sqlite3.connect('oauth2.db')
+        con = sqlite3.connect(
+            'oauth2.db',
+            detect_types=sqlite3.PARSE_DECLTYPES
+        )
         cur = con.cursor()
         cur.execute(
             'SELECT stripe_id '
@@ -458,7 +463,7 @@ def success():
         cur.execute(
             'INSERT INTO authorized (user, ip, timestamp) '
             'VALUES (?, ?, ?)',
-            (user, ip, str(datetime.now().replace(microsecond=0)))
+            (user, ip, datetime.now().replace(microsecond=0))
         )
         con.commit()
         con.close()
@@ -653,7 +658,7 @@ def start_server():
     cur.execute(
         'CREATE TABLE IF NOT EXISTS userInfo(discord_id TEXT, user TEXT, '
         'stripe_id TEXT, plan TEXT, shared_devices JSON, guilds JSON, '
-        'last_login TEXT)'
+        'last_login TIMESTAMP)'
     )
     cur.execute(
         'CREATE TABLE IF NOT EXISTS fingerprints(fingerprint TEXT, '
@@ -661,7 +666,7 @@ def start_server():
     )
     cur.execute(
         'CREATE TABLE IF NOT EXISTS authorized(user TEXT, ip TEXT, '
-        'timestamp TEXT)'
+        'timestamp TIMESTAMP)'
     )
     parse_settings(con, cur)
     con.close()
