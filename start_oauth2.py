@@ -297,7 +297,9 @@ def subscribe():
             queue.put(payload)
             queue.join()
     try:
-        if request.args.get('origin') == 'login':
+        if (request.args.get('origin') in ['login', 'map'] and
+                not new_user and
+                user_dict[3] == app.config['premium_role']):
             if request.headers["X-Forwarded-For"]:
                 ip = request.headers["X-Forwarded-For"].split(',')[0]
             else:
@@ -321,7 +323,9 @@ def subscribe():
                     request.args['lat'], request.args['lon']))
             else:
                 return redirect('/')
-        elif request.args.get('origin') == 'map':
+        elif (request.args.get('origin') != 'login' and
+              not new_user and
+              user_dict[3] != app.config['premium_role']):
             con.close()
             return redirect('/login')
         elif not new_user and user_dict[3] == 'Banned':
