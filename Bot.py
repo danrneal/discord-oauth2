@@ -70,83 +70,119 @@ class Bot(discord.Client):
                 id=int(payload['discord_id'])
             )
             if payload['event'] == 'flagged_device':
-                descript = (
-                    payload['name'] +
-                    '\n\n**Id**\n' + payload['discord_id'] +
-                    '\n\n**Shared With**\n```\n'
-                )
-                for name in payload['shared_with']:
-                    descript += name + '\n'
-                descript += '```\n' + str(datetime.time(datetime.now().replace(
-                    microsecond=0)))
                 em = discord.Embed(
                     title=(
                         u"\U0001F6A9" + ' User logged in with flagged device!'
                     ),
-                    description=descript,
+                    description=payload['name'],
                     color=int('0xee281f', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                devices = '```\n'
+                for name in payload['shared_with']:
+                    devices += '{}\n'.format(name)
+                devices += '```'
+                em.add_field(
+                    name='Shared devices with',
+                    value=devices,
+                    inline=False
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'shared_device':
-                descript = (
-                    payload['name'] +
-                    '\n\n**Id**\n' + payload['discord_id'] +
-                    '\n\n**Shared With**\n```\n'
-                )
-                for name in payload['shared_with']:
-                    descript += name + '\n'
-                descript += '```\n' + str(datetime.time(datetime.now().replace(
-                    microsecond=0)))
                 em = discord.Embed(
                     title=(
                         u"\U0001F5A5" + ' User logged in with shared device!'
                     ),
-                    description=descript,
+                    description=payload['name'],
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                devices = '```\n'
+                for name in payload['shared_with']:
+                    devices += '{}\n'.format(name)
+                devices += '```'
+                em.add_field(
+                    name='Shared devices with',
+                    value=devices,
+                    inline=False
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'new_user':
-                descript = (
-                    payload['name'] +
-                    '\n\n**Id**\n' + payload['discord_id'] +
-                    '\n\n**Servers**\n```\n'
-                )
-                for guild in payload['guilds']:
-                    descript += guild + '\n'
-                descript += '```\n' + str(datetime.time(datetime.now().replace(
-                    microsecond=0)))
                 em = discord.Embed(
                     title=u"\U0001F195" + ' New user logged in!',
-                    description=descript,
+                    description=payload['name'],
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                servers = '```\n'
+                for guild in payload['guilds']:
+                    if len(servers) + len(guild) > 1016:
+                        servers += '...\n'
+                        break
+                    servers += '{}\n'.format(guild)
+                servers += '```'
+                em.add_field(
+                    name='Servers',
+                    value=servers,
+                    inline=False
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'new_guilds':
-                descript = (
-                    payload['name'] +
-                    '\n\n**Id**\n' + payload['discord_id'] +
-                    '\n\n**New Servers**\n```\n'
-                )
-                for guild in payload['new_guilds']:
-                    descript += guild + '\n'
-                descript += '```\n' + str(datetime.time(datetime.now().replace(
-                    microsecond=0)))
                 em = discord.Embed(
                     title=u"\U0001F195" + ' User joined new guild(s)!',
-                    description=descript,
+                    description=payload['name'],
                     color=int('0x71cd40', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                servers = '```\n'
+                for guild in payload['new_guilds']:
+                    if len(servers) + len(guild) > 1016:
+                        servers += '...\n'
+                        break
+                    servers += '{}\n'.format(guild)
+                servers += '```'
+                em.add_field(
+                    name='New Servers',
+                    value=servers,
+                    inline=False
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'banned':
                 em = discord.Embed(
                     title=u"\u274C" + ' Unauthorized login attempt!',
-                    description=(
-                        payload['name'] +
-                        '\n\n**Id**\n' + payload['discord_id'] +
-                        '\n\n' + str(datetime.time(datetime.now().replace(
-                            microsecond=0)))
-                    ),
+                    description=payload['name'],
                     color=int('0xee281f', 16)
+                )
+                em.add_field(
+                    name='Id',
+                    value=payload['discord_id']
+                )
+                em.set_footer(
+                    text=str(datetime.now().strftime("%m/%d/%Y at %I:%M %p"))
                 )
                 await self.send_msg(em, member, ['user_info_channel'])
             elif payload['event'] == 'charge.succeeded':
