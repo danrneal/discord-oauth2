@@ -670,10 +670,11 @@ class Bot(discord.Client):
                         value=devices,
                         inline=False
                     )
-                em.set_footer(
-                    text='Updated: {}'.format(
-                        user_dict[4].strftime("%m/%d/%Y at %I:%M %p"))
-                )
+                if user_dict[4] is not None:
+                    em.set_footer(
+                        text='Updated: {}'.format(
+                            user_dict[4].strftime("%m/%d/%Y at %I:%M %p"))
+                    )
                 if member is not None:
                     em.set_thumbnail(url=member.avatar_url)
                 await self.__user_info_channel.send(embed=em)
