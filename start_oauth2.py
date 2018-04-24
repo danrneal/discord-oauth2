@@ -311,7 +311,7 @@ def subscribe():
             cur.execute(
                 'INSERT INTO authorized (user, ip, timestamp) '
                 'VALUES (?, ?, ?)',
-                (username, ip, str(datetime.now().replace(microsecond=0)))
+                (username, ip, str(datetime.utcnow().replace(microsecond=0)))
             )
             con.commit()
             con.close()
@@ -464,7 +464,7 @@ def success():
         cur.execute(
             'INSERT INTO authorized (user, ip, timestamp) '
             'VALUES (?, ?, ?)',
-            (user, ip, str(datetime.now().replace(microsecond=0)))
+            (user, ip, str(datetime.utcnow().replace(microsecond=0)))
         )
         con.commit()
         con.close()
