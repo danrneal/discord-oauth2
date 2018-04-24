@@ -55,7 +55,7 @@ class Bot(discord.Client):
                 await member.send(embed=em)
                 log.info('Sent {} messgage to {}'.format(
                     em.title, member))
-            except discord.Forbidden:
+            except (AttributeError, discord.Forbidden):
                 log.info('Unable to send {} message to {}'.format(
                     em.title, member))
 
@@ -473,9 +473,10 @@ class Bot(discord.Client):
 
     async def on_ready(self):
         log.info("----------- Bot '{}' is starting up.".format(self.__name))
-        for channel_id in self.__stripe_channel:
-            if self.get_channel(channel_id) is not None:
-                self.__stripe_channel = self.get_channel(channel_id)
+        if type(self.__stripe_channel) == list:
+            for channel_id in self.__stripe_channel:
+                if self.get_channel(channel_id) is not None:
+                    self.__stripe_channel = self.get_channel(channel_id)
         for channel_id in self.__user_info_channel:
             if self.get_channel(channel_id) is not None:
                 self.__user_info_channel = self.get_channel(channel_id)

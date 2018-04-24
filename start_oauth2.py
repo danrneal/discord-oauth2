@@ -311,7 +311,7 @@ def subscribe():
             cur.execute(
                 'INSERT INTO authorized (user, ip, timestamp) '
                 'VALUES (?, ?, ?)',
-                (username, ip, datetime.now().replace(microsecond=0))
+                (username, ip, str(datetime.now().replace(microsecond=0)))
             )
             con.commit()
             con.close()
@@ -377,10 +377,7 @@ def subscribe():
 def success():
     user = request.form['stripeEmail'].split(' - ')[0]
     if request.args['plan'] == app.config['premium_role'].lower():
-        con = sqlite3.connect(
-            'oauth2.db',
-            detect_types=sqlite3.PARSE_DECLTYPES
-        )
+        con = sqlite3.connect('oauth2.db')
         cur = con.cursor()
         cur.execute(
             'SELECT stripe_id '
@@ -467,7 +464,7 @@ def success():
         cur.execute(
             'INSERT INTO authorized (user, ip, timestamp) '
             'VALUES (?, ?, ?)',
-            (user, ip, datetime.now().replace(microsecond=0))
+            (user, ip, str(datetime.now().replace(microsecond=0)))
         )
         con.commit()
         con.close()
@@ -670,7 +667,7 @@ def start_server():
     )
     cur.execute(
         'CREATE TABLE IF NOT EXISTS authorized(user TEXT, ip TEXT, '
-        'timestamp TIMESTAMP)'
+        'timestamp TEXT)'
     )
     parse_settings(con, cur)
     con.close()

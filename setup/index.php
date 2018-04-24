@@ -23,6 +23,11 @@ if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     $ip = $_SERVER['REMOTE_ADDR'];
 }
 $db = new SQLite3('Discord-OAuth2/oauth2.db');
+
+$query = "DELETE FROM authorized WHERE DATETIME(timestamp) < DATETIME('now', '-30 seconds')";
+$stmt = $db->prepare($query);
+$stmt->execute();
+
 $query = "SELECT user FROM authorized WHERE ip = :ip";
 $stmt = $db->prepare($query);
 $stmt->bindValue(':ip', $ip);
