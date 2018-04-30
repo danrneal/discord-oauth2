@@ -18,8 +18,8 @@ class Bot(discord.Client):
         self.__name = name
         self.__premium_role = premium_role
         self.__standard_role = standard_role
-        self.__stripe_channel = stripe_channels
-        self.__user_info_channel = user_info_channels
+        self.__stripe_channels = stripe_channels
+        self.__user_info_channels = user_info_channels
         self.__queue = Queue()
 
     def get_name(self):
@@ -35,21 +35,33 @@ class Bot(discord.Client):
         if member is not None:
             em.set_thumbnail(url=member.avatar_url)
         if 'stripe_channel' in destinations:
-            await self.__stripe_channel.send(embed=em)
-            if member is not None:
+            stripe_channel = None
+            for channel_id in self.__stripe_channels:
+                if self.get_channel(channel_id) is not None:
+                    stripe_channel = self.get_channel(channel_id)
+                    await stripe_channel.send(embed=em)
+            if member is not None and stripe_channel is not None:
                 log.info('Sent {} messgage for {} to stripe channel.'.format(
                     em.title, member))
-            else:
+            elif stripe_channel is not None:
                 log.info('Sent {} message to stripe channel.'.format(em.title))
+            else:
+                log.error('Could not find stripe channel')
         if 'user_info_channel' in destinations:
-            await self.__user_info_channel.send(embed=em)
-            if member is not None:
+            user_info_channel = None
+            for channel_id in self.__user_info_channels:
+                if self.get_channel(channel_id) is not None:
+                    user_info_channel = self.get_channel(channel_id)
+                    await user_info_channel.send(embed=em)
+            if member is not None and user_info_channel is not None:
                 log.info((
                     'Sent {} messgage for {} to user info channel.'
                 ).format(em.title, member))
-            else:
+            elif user_info_channel is not None:
                 log.info('Sent {} message to user info channel.'.format(
                     em.title))
+            else:
+                log.error('Could not find user info channel')
         if 'member' in destinations:
             try:
                 await member.send(embed=em)
@@ -397,7 +409,15 @@ class Bot(discord.Client):
             self.__queue.task_done()
 
     async def role_check(self, member):
-        if (member.top_role >= self.__standard_role and
+        premium_role = discord.utils.get(
+            member.guild.roles,
+            name=self.__premium_role
+        )
+        standard_role = discord.utils.get(
+            member.guild.roles,
+            name=self.__standard_role
+        )
+        if (member.top_role >= standard_role and
                 member.nick is None and
                 self.user.id != member.id):
             try:
@@ -414,12 +434,11 @@ class Bot(discord.Client):
             ('$.{}'.format(member.guild.id), str(member.id))
         )
         user_dict = cur.fetchone()
-        if ((user_dict is not None and
-             user_dict[0] is not None) or
-                member.top_role >= self.__premium_role):
-            plan = str(self.__premium_role)
-        elif member.top_role >= self.__standard_role:
-            plan = str(self.__standard_role)
+        if ((user_dict is not None and user_dict[0] is not None) or
+                member.top_role >= premium_role):
+            plan = str(premium_role)
+        elif member.top_role >= standard_role:
+            plan = str(standard_role)
         elif user_dict is None:
             plan = None
         else:
@@ -460,35 +479,16 @@ class Bot(discord.Client):
             log.info('Updated user info for {}'.format(member))
         con.commit()
         con.close()
-        if (plan == str(self.__premium_role) and
-                member.top_role < self.__premium_role):
-            await member.add_roles(self.__premium_role)
-            log.info('Added {} role to {}.'.format(
-                self.__premium_role, member))
-        elif (plan != str(self.__premium_role) and
-              self.__premium_role in member.roles):
-            await member.remove_roles(self.__premium_role)
-            log.info('Removed {} role from {}.'.format(
-                self.__premium_role, member))
+        if plan == str(premium_role) and member.top_role < premium_role:
+            await member.add_roles(premium_role)
+            log.info('Added {} role to {}.'.format(premium_role, member))
+        elif plan != str(premium_role) and premium_role in member.roles:
+            await member.remove_roles(premium_role)
+            log.info('Removed {} role from {}.'.format(premium_role, member))
 
     async def on_ready(self):
         log.info("----------- Bot '{}' is starting up.".format(self.__name))
-        if type(self.__stripe_channel) == list:
-            for channel_id in self.__stripe_channel:
-                if self.get_channel(channel_id) is not None:
-                    self.__stripe_channel = self.get_channel(channel_id)
-        for channel_id in self.__user_info_channel:
-            if self.get_channel(channel_id) is not None:
-                self.__user_info_channel = self.get_channel(channel_id)
         for guild in self.guilds:
-            self.__premium_role = discord.utils.get(
-                guild.roles,
-                name=self.__premium_role
-            )
-            self.__standard_role = discord.utils.get(
-                guild.roles,
-                name=self.__standard_role
-            )
             for ban in await guild.bans():
                 con = sqlite3.connect('oauth2.db')
                 cur = con.cursor()
@@ -528,7 +528,7 @@ class Bot(discord.Client):
         await self.role_check(member)
 
     async def on_member_update(self, before, after):
-        if before.roles != after.roles or str(before) != str(after):
+        if before.top_role != after.top_role or str(before) != str(after):
             await self.role_check(after)
 
     async def on_member_remove(self, member):
@@ -589,7 +589,7 @@ class Bot(discord.Client):
             await message.channel.send('pong')
             await message.delete()
             log.info('Sent ping message to {}.'.format(message.author))
-        if (message.channel == self.__user_info_channel and
+        if (message.channel.id in self.__user_info_channels and
                 message.content.lower().startswith('!info ')):
             if len(message.mentions) == 1:
                 member = message.mentions[0]
@@ -603,7 +603,7 @@ class Bot(discord.Client):
                             message.author.mention),
                         color=int('0xee281f', 16)
                     )
-                    await self.__user_info_channel.send(embed=em)
+                    await message.channel.send(embed=em)
                     log.info('{} sent an invalid user id.'.format(
                         message.author))
                     return
@@ -630,7 +630,7 @@ class Bot(discord.Client):
                         message.author.mention, member_id),
                     color=int('0xee281f', 16)
                 )
-                await self.__user_info_channel.send(embed=em)
+                await message.channel.send(embed=em)
                 await message.delete()
                 log.info('Cannot find user id {}.'.format(member_id))
             else:
@@ -678,6 +678,6 @@ class Bot(discord.Client):
                     )
                 if member is not None:
                     em.set_thumbnail(url=member.avatar_url)
-                await self.__user_info_channel.send(embed=em)
+                await message.channel.send(embed=em)
                 await message.delete()
                 log.info('Sent user info for {}'.format(user_dict[0]))
