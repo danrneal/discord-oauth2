@@ -742,11 +742,6 @@ def parse_settings(con, cur):
         required=True
     )
     parser.add_argument(
-        '-pp', '--premium_price',
-        type=int,
-        required=True
-    )
-    parser.add_argument(
         '-stripe', '--stripe_channels',
         type=int,
         action='append',
@@ -773,7 +768,6 @@ def parse_settings(con, cur):
         premium_role=args.premium_role,
         premium_role_id=args.premium_role_id,
         standard_role=args.standard_role,
-        premium_price=args.premium_price,
         invite_code=args.invite_code,
         OAUTH2_CLIENT_ID=args.OAUTH2_CLIENT_ID,
         SECRET_KEY=args.OAUTH2_CLIENT_SECRET,
@@ -788,6 +782,10 @@ def parse_settings(con, cur):
     if 'http://' in app.config['OAUTH2_REDIRECT_URI']:
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = 'true'
     stripe.api_key = app.config['stripe_secret_key']
+    plans = stripe.Plan.list(active=True)
+    for plan in plans:
+        if plan['id'] == app.config['premium_role_id']:
+            app.config.update(premium_price=plan['amount'])
     customers = stripe.Customer.list(limit=100)
     for customer in customers.auto_paging_iter():
         if len(customer['subscriptions']['data']) < 1:
