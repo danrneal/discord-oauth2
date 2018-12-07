@@ -447,8 +447,7 @@ def success():
             stripe.Subscription.modify(
                 customer.subscriptions['data'][0]['id'],
                 items=[{
-                    'id': subscription['items']['data'][0].id,
-                    'plan': app.config['premium_role'].lower(),
+                    'id': subscription['items']['data'][0].id
                 }],
                 cancel_at_period_end=False
             )
