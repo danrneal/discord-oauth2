@@ -481,8 +481,7 @@ def success():
                 description="{} - {}".format(user, request.args['id']),
                 metadata={'message': request.args['message']},
                 receipt_email=request.form['stripeEmail'].split(' - ')[1],
-                source=request.form['stripeToken'],
-                statement_descriptor=app.config['statement_descriptor']
+                source=request.form['stripeToken']
             )
             log.info('Processed new tip for {}.'.format(user))
         except stripe.error.CardError:
@@ -760,11 +759,6 @@ def parse_settings(con, cur):
         default=[]
     )
     parser.add_argument(
-        '-sd', '--statement_descriptor',
-        type=str,
-        required=True
-    )
-    parser.add_argument(
         '-inv', '--invite_code',
         type=str,
         required=True
@@ -780,7 +774,6 @@ def parse_settings(con, cur):
         premium_role_id=args.premium_role_id,
         standard_role=args.standard_role,
         premium_price=args.premium_price,
-        statement_descriptor=args.statement_descriptor,
         invite_code=args.invite_code,
         OAUTH2_CLIENT_ID=args.OAUTH2_CLIENT_ID,
         SECRET_KEY=args.OAUTH2_CLIENT_SECRET,

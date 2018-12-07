@@ -5,7 +5,6 @@ bot_tokens: 					##list of bot tokens
 STRIPE_SECRET_KEY: 				##stripe private key
 STRIPE_PUBLISHABLE_KEY: 		##stripe public key
 STRIPE_WEBHOOK_KEY: 			##stripe webhook key
-statement_descriptor: 			##statement descriptor for one-time charges in stripe
 standard_role: 					##role name for non-premium subscribers
 premium_role:					##role name for premium subscribers
 premium_role_id:                ##stripe role id for pricing plan
