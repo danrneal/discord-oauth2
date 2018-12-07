@@ -404,7 +404,7 @@ def success():
                 stripe.Subscription.create(
                     customer=customer.id,
                     items=[{
-                        'plan': app.config['premium_role_id']
+                        'plan': app.config['premium_plan_id']
                     }],
                 )
                 cur.execute(
@@ -732,7 +732,7 @@ def parse_settings(con, cur):
         required=True
     )
     parser.add_arguement(
-        '-pid', '--premium_role_id',
+        '-pid', '--premium_plan_id',
         type=str,
         required=True
     )
@@ -766,8 +766,7 @@ def parse_settings(con, cur):
         'API_BASE_URL', 'https://discordapp.com/api')
     app.config.update(
         premium_role=args.premium_role,
-        premium_role_id=args.premium_role_id,
-        standard_role=args.standard_role,
+        premium_plan_id=args.premium_plan_id,
         invite_code=args.invite_code,
         OAUTH2_CLIENT_ID=args.OAUTH2_CLIENT_ID,
         SECRET_KEY=args.OAUTH2_CLIENT_SECRET,
@@ -784,7 +783,7 @@ def parse_settings(con, cur):
     stripe.api_key = app.config['stripe_secret_key']
     plans = stripe.Plan.list(active=True)
     for plan in plans:
-        if plan['id'] == app.config['premium_role_id']:
+        if plan['id'] == app.config['premium_plan_id']:
             app.config.update(premium_price=plan['amount'])
     customers = stripe.Customer.list(limit=100)
     for customer in customers.auto_paging_iter():

@@ -7,7 +7,7 @@ STRIPE_PUBLISHABLE_KEY: 		##stripe public key
 STRIPE_WEBHOOK_KEY: 			##stripe webhook key
 standard_role: 					##role name for non-premium subscribers
 premium_role:					##role name for premium subscribers
-premium_role_id:                ##stripe role id for pricing plan
+premium_plan_id:                ##stripe role id for pricing plan
 stripe_channels: 				##channel ids for stripe to post webhooks to
 user_info_channels:             ##channel ids for user info to be posted to
 invite_code:                    ##invite code for users to be added to the server with
