@@ -264,6 +264,12 @@ class Bot(discord.Client):
                 await self.send_msg(em, member, ['stripe_channel', 'member'])
             elif payload['event'] == 'customer.subscription.deleted':
                 if member is not None:
+                    premium_role = discord.utils.get(
+                        member.guild.roles,
+                        name=self.__premium_role
+                    )
+                    await member.remove_roles(premium_role)
+                    log.info('Removed {} role from {}.'.format(premium_role, member))
                     await self.role_check(member)
                 em = discord.Embed(
                     title=u"\u274C" + ' Subscription Deleted!',
