@@ -232,6 +232,10 @@ class Bot(discord.Client):
                         name='Amount',
                         value='${:,.2f}'.format(payload['amount']/100)
                     )
+                    em.add_field(
+                        name='Message',
+                        value=payload['message']
+                    )
                     em.set_footer(
                         text=str(datetime.now().strftime(
                             "%m/%d/%Y at %I:%M %p"))
