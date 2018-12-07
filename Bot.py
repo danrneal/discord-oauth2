@@ -375,7 +375,7 @@ class Bot(discord.Client):
                 )
                 em.add_field(
                     name='Attempt',
-                    value='{} of 3'.format(payload['attempt'])
+                    value='{} of 2'.format(payload['attempt'])
                 )
                 if payload['next_attempt'] is not None:
                     em.add_field(
