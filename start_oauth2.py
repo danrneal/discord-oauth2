@@ -340,7 +340,6 @@ def subscribe():
         con.close()
         log.info("Directed {} to subscription page.".format(username))
         msg = ''
-        amt = app.config['premium_price']
         if 'amount' in request.args:
             amount = request.args['amount'].replace('$', '').replace(',', '')
             try:
@@ -364,7 +363,7 @@ def subscribe():
             email="{} - {}".format(username, user['email']),
             msg=msg,
             id=user['id'],
-            amt=amt,
+            amt=app.config['premium_price'],
             fp=fp
         )
     except Exception as e:
@@ -376,7 +375,7 @@ def subscribe():
 @app.route('/subscribe/success', methods=['POST'])
 def success():
     user = request.form['stripeEmail'].split(' - ')[0]
-    if request.args['plan'] == app.config['premium_role'].lower():
+    if request.args['plan'] == 'premium':
         con = sqlite3.connect('oauth2.db')
         cur = con.cursor()
         cur.execute(
@@ -405,7 +404,7 @@ def success():
                 stripe.Subscription.create(
                     customer=customer.id,
                     items=[{
-                        'plan': app.config['premium_role'].lower()
+                        'plan': app.config['premium_role_id']
                     }],
                 )
                 cur.execute(
@@ -733,6 +732,11 @@ def parse_settings(con, cur):
         type=str,
         required=True
     )
+    parser.add_arguement(
+        '-pid', '--premium_role_id',
+        type=str,
+        required=True
+    )
     parser.add_argument(
         '-sr', '--standard_role',
         type=str,
@@ -773,6 +777,7 @@ def parse_settings(con, cur):
         'API_BASE_URL', 'https://discordapp.com/api')
     app.config.update(
         premium_role=args.premium_role,
+        premium_role_id=args.premium_role_id,
         standard_role=args.standard_role,
         premium_price=args.premium_price,
         statement_descriptor=args.statement_descriptor,

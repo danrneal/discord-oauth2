@@ -14,7 +14,7 @@
       <h2>Gold Star Status</h2>
       <p>Access to the live map and to Discord pokemon subscriptions.</p>
 
-      <form action="/subscribe/success?id={{ id }}&plan=gold+star+trainers" method="post">
+      <form action="/subscribe/success?id={{ id }}&plan=premium" method="post">
 
         <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                 data-key="{{ key }}"
@@ -26,7 +26,7 @@
                 data-zip-code="true"
                 data-panel-label="Subscribe"
                 data-email="{{ email }}"
-                data-label="$2.99/mo"></script>
+                data-label="${{ amt/100 }}/mo"></script>
       </form>
     </div>
 
