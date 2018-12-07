@@ -417,14 +417,6 @@ class Bot(discord.Client):
             member.guild.roles,
             name=self.__standard_role
         )
-        if (member.top_role >= standard_role and
-                member.nick is None and
-                self.user.id != member.id):
-            try:
-                await member.edit(nick=member.display_name + '.')
-                log.info("Locked {}'s nickname".format(member))
-            except discord.Forbidden:
-                pass
         con = sqlite3.connect('oauth2.db')
         cur = con.cursor()
         cur.execute(

@@ -570,11 +570,6 @@ def webhooks():
                 event.data['object']['customer'])
             product = stripe.Product.retrieve(
                 event.data['object']['plan']['product'])
-            payload = {
-                'event': event.type,
-                'discord_id': customer['description'].split(' - ')[1],
-                'plan': product['name']
-            }
             customer.delete()
             con = sqlite3.connect('oauth2.db')
             cur = con.cursor()
@@ -586,6 +581,11 @@ def webhooks():
             )
             con.commit()
             con.close()
+            payload = {
+                'event': event.type,
+                'discord_id': customer['description'].split(' - ')[1],
+                'plan': product['name']
+            }
         except KeyError:
             payload = None
     elif event.type == 'customer.subscription.updated':
