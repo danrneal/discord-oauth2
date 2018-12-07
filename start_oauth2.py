@@ -731,7 +731,7 @@ def parse_settings(con, cur):
         type=str,
         required=True
     )
-    parser.add_arguement(
+    parser.add_argument(
         '-pid', '--premium_plan_id',
         type=str,
         required=True
