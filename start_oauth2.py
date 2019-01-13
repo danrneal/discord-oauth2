@@ -399,7 +399,7 @@ def success():
                 email=request.form['stripeEmail'].split(' - ')[1],
                 source=request.form['stripeToken'])
             log.info('Created customer: {}'.format(user))
-            member = False
+        member = False
         for subscription in customer.subscriptions['data']:
             if subscription['plan']['id'] == app.config['premium_plan_id']:
                 member = True
