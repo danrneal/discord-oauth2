@@ -547,13 +547,13 @@ def webhooks():
             'amount': event.data['object']['amount']
         }
         if event.data['object']['customer'] is not None:
+            customer = stripe.Customer.retrieve(
+                event.data['object']['customer'])
             member = False
             for subscription in customer.subscriptions['data']:
                 if subscription['plan']['id'] == app.config['premium_plan_id']:
                     member = True
             if member:
-                customer = stripe.Customer.retrieve(
-                    event.data['object']['customer'])
                 payload['discord_id'] = customer['description'].split(' - ')[1]
             else:
                 payload = None
