@@ -399,7 +399,11 @@ def success():
                 email=request.form['stripeEmail'].split(' - ')[1],
                 source=request.form['stripeToken'])
             log.info('Created customer: {}'.format(user))
-        if len(customer.subscriptions['data']) == 0:
+            member = False
+        for subscription in customer.subscriptions['data']:
+            if subscription['plan']['id'] == app.config['premium_plan_id']:
+                member = True
+        if not member:
             try:
                 stripe.Subscription.create(
                     customer=customer.id,
@@ -479,7 +483,10 @@ def success():
                 amount=request.args['amount'],
                 currency='usd',
                 description="{} - {}".format(user, request.args['id']),
-                metadata={'message': request.args['message']},
+                metadata={
+                    'message': request.args['message'],
+                    'location': app.config['premium_plan_id']
+                },
                 receipt_email=request.form['stripeEmail'].split(' - ')[1],
                 source=request.form['stripeToken']
             )
@@ -540,10 +547,17 @@ def webhooks():
             'amount': event.data['object']['amount']
         }
         if event.data['object']['customer'] is not None:
-            customer = stripe.Customer.retrieve(
-                event.data['object']['customer'])
-            payload['discord_id'] = customer['description'].split(' - ')[1]
-        else:
+            member = False
+            for subscription in customer.subscriptions['data']:
+                if subscription['plan']['id'] == app.config['premium_plan_id']:
+                    member = True
+            if member:
+                customer = stripe.Customer.retrieve(
+                    event.data['object']['customer'])
+                payload['discord_id'] = customer['description'].split(' - ')[1]
+            else:
+                payload = None
+        elif event.data['object']['metadata'] == app.config['premium_plan_id']:
             payload['discord_id'] = event.data['object'][
                 'description'].split(' - ')[1]
             if 'message' in event.data['object']['metadata']:
@@ -551,20 +565,16 @@ def webhooks():
                     'message']
             else:
                 payload['message'] = 'None'
+        else:
+            payload = None
     elif event.type == 'customer.subscription.created':
         customer = stripe.Customer.retrieve(
             event.data['object']['customer'])
-        product = stripe.Product.retrieve(
-            event.data['object']['plan']['product'])
-        payload = {
-            'event': event.type,
-            'discord_id': customer['description'].split(' - ')[1],
-            'plan': product['name']
-        }
-    elif event.type == 'customer.subscription.deleted':
-        try:
-            customer = stripe.Customer.retrieve(
-                event.data['object']['customer'])
+        member = False
+        for subscription in customer.subscriptions['data']:
+            if subscription['plan']['id'] == app.config['premium_plan_id']:
+                member = True
+        if member:
             product = stripe.Product.retrieve(
                 event.data['object']['plan']['product'])
             payload = {
@@ -572,17 +582,37 @@ def webhooks():
                 'discord_id': customer['description'].split(' - ')[1],
                 'plan': product['name']
             }
-            customer.delete()
-            con = sqlite3.connect('oauth2.db')
-            cur = con.cursor()
-            cur.execute(
-                'UPDATE userInfo '
-                'SET stripe_id = ? '
-                'WHERE discord_id = ?',
-                (None, payload['discord_id'])
-            )
-            con.commit()
-            con.close()
+        else:
+            payload = None
+    elif event.type == 'customer.subscription.deleted':
+        try:
+            customer = stripe.Customer.retrieve(
+                event.data['object']['customer'])
+            member = False
+            for subscription in customer.subscriptions['data']:
+                if subscription['plan']['id'] == app.config['premium_plan_id']:
+                    member = True
+            if member:
+                product = stripe.Product.retrieve(
+                    event.data['object']['plan']['product'])
+                payload = {
+                    'event': event.type,
+                    'discord_id': customer['description'].split(' - ')[1],
+                    'plan': product['name']
+                }
+                customer.delete()
+                con = sqlite3.connect('oauth2.db')
+                cur = con.cursor()
+                cur.execute(
+                    'UPDATE userInfo '
+                    'SET stripe_id = ? '
+                    'WHERE discord_id = ?',
+                    (None, payload['discord_id'])
+                )
+                con.commit()
+                con.close()
+            else:
+                payload = None
         except KeyError:
             payload = None
     elif event.type == 'customer.subscription.updated':
@@ -590,57 +620,85 @@ def webhooks():
                 'cancel_at_period_end') is not None:
             customer = stripe.Customer.retrieve(
                 event.data['object']['customer'])
-            product = stripe.Product.retrieve(
-                event.data['object']['plan']['product'])
-            payload = {
-                'event': event.type,
-                'discord_id': customer['description'].split(' - ')[1],
-                'plan': product['name']
-            }
-            if event.data['object']['cancel_at_period_end'] is True:
-                payload['type'] = 'canceled'
+            member = False
+            for subscription in customer.subscriptions['data']:
+                if subscription['plan']['id'] == app.config['premium_plan_id']:
+                    member = True
+            if member:
+                product = stripe.Product.retrieve(
+                    event.data['object']['plan']['product'])
+                payload = {
+                    'event': event.type,
+                    'discord_id': customer['description'].split(' - ')[1],
+                    'plan': product['name']
+                }
+                if event.data['object']['cancel_at_period_end'] is True:
+                    payload['type'] = 'canceled'
+                else:
+                    payload['type'] = 'reactivated'
             else:
-                payload['type'] = 'reactivated'
+                payload = None
         else:
             payload = None
     elif event.type == 'customer.updated':
         customer = stripe.Customer.retrieve(event.data['object']['id'])
-        payload = {
-            'event': event.type,
-            'discord_id': customer['description'].split(' - ')[1]
-        }
-        if 'default_source' in event.data['previous_attributes']:
-            source = event.data['object']['sources']['data'][0]
-            payload['last4'] = source['last4']
-            payload['exp_month'] = source['exp_month']
-            payload['exp_year'] = source['exp_year']
-            payload['brand'] = source['brand']
-            payload['zip'] = source['address_zip']
-        if 'email' in event.data['previous_attributes']:
-            payload['old_email'] = event.data['previous_attributes'][
-                'email']
-            payload['email'] = event.data['object']['email']
-        if ('default_source' not in event.data['previous_attributes'] and
-                'email' not in event.data['previous_attributes']):
+        member = False
+        for subscription in customer.subscriptions['data']:
+            if subscription['plan']['id'] == app.config['premium_plan_id']:
+                member = True
+        if member:
+            payload = {
+                'event': event.type,
+                'discord_id': customer['description'].split(' - ')[1]
+            }
+            if 'default_source' in event.data['previous_attributes']:
+                source = event.data['object']['sources']['data'][0]
+                payload['last4'] = source['last4']
+                payload['exp_month'] = source['exp_month']
+                payload['exp_year'] = source['exp_year']
+                payload['brand'] = source['brand']
+                payload['zip'] = source['address_zip']
+            if 'email' in event.data['previous_attributes']:
+                payload['old_email'] = event.data['previous_attributes'][
+                    'email']
+                payload['email'] = event.data['object']['email']
+            if ('default_source' not in event.data['previous_attributes'] and
+                    'email' not in event.data['previous_attributes']):
+                payload = None
+        else:
             payload = None
     elif event.type == 'invoice.payment_failed':
         customer = stripe.Customer.retrieve(
             event.data['object']['customer'])
-        payload = {
-            'event': event.type,
-            'discord_id': customer['description'].split(' - ')[1],
-            'amount': event.data['object']['amount_due'],
-            'attempt': event.data['object']['attempt_count'],
-            'next_attempt': event.data['object']['next_payment_attempt']
-        }
+        member = False
+        for subscription in customer.subscriptions['data']:
+            if subscription['plan']['id'] == app.config['premium_plan_id']:
+                member = True
+        if member:
+            payload = {
+                'event': event.type,
+                'discord_id': customer['description'].split(' - ')[1],
+                'amount': event.data['object']['amount_due'],
+                'attempt': event.data['object']['attempt_count'],
+                'next_attempt': event.data['object']['next_payment_attempt']
+            }
+        else:
+            payload = None
     elif event.type == 'invoice.upcoming':
         customer = stripe.Customer.retrieve(
             event.data['object']['customer'])
-        payload = {
-            'event': event.type,
-            'discord_id': customer['description'].split(' - ')[1],
-            'amount': event.data['object']['amount_due']
-        }
+        member = False
+        for subscription in customer.subscriptions['data']:
+            if subscription['plan']['id'] == app.config['premium_plan_id']:
+                member = True
+        if member:
+            payload = {
+                'event': event.type,
+                'discord_id': customer['description'].split(' - ')[1],
+                'amount': event.data['object']['amount_due']
+            }
+        else:
+            payload = None
     if payload is not None:
         for queue in queues:
             queue.put(payload)
@@ -798,38 +856,50 @@ def parse_settings(con, cur):
             )
             customer.delete()
         else:
-            user = customer['description'].split(' - ')[0]
-            discord_id = customer['description'].split(' - ')[1]
-            product = stripe.Product.retrieve(
-                customer['subscriptions']['data'][0]['plan']['product'])
-            cur.execute(
-                'SELECT user, stripe_id, plan '
-                'FROM userInfo '
-                'WHERE discord_id = ?',
-                (discord_id,)
-            )
-            user_dict = cur.fetchone()
-            if user_dict is None:
+            member = False
+            for subscription in customer.subscriptions['data']:
+                if subscription['plan']['id'] == app.config['premium_plan_id']:
+                    member = True
+            if member:
+                user = customer['description'].split(' - ')[0]
+                discord_id = customer['description'].split(' - ')[1]
+                product = stripe.Product.retrieve(
+                    customer['subscriptions']['data'][0]['plan']['product'])
                 cur.execute(
-                    'INSERT INTO userInfo '
-                    '(discord_id, user, stripe_id, plan, shared_devices, '
-                    'guilds) '
-                    'VALUES (?, ?, ?, ?, ?, ?)',
-                    (
-                        discord_id, user, customer['id'], product['name'],
-                        json.dumps({}), json.dumps({})
-                    )
+                    'SELECT user, stripe_id, plan '
+                    'FROM userInfo '
+                    'WHERE discord_id = ?',
+                    (discord_id,)
                 )
-                log.info("Added {}'s user info".format(user))
-            elif (user_dict[1] != customer['id'] or
-                    user_dict[2] != product['name']):
+                user_dict = cur.fetchone()
+                if user_dict is None:
+                    cur.execute(
+                        'INSERT INTO userInfo '
+                        '(discord_id, user, stripe_id, plan, shared_devices, '
+                        'guilds) '
+                        'VALUES (?, ?, ?, ?, ?, ?)',
+                        (
+                            discord_id, user, customer['id'], product['name'],
+                            json.dumps({}), json.dumps({})
+                        )
+                    )
+                    log.info("Added {}'s user info".format(user))
+                elif (user_dict[1] != customer['id'] or
+                        user_dict[2] != product['name']):
+                    cur.execute(
+                        'UPDATE userInfo '
+                        'SET stripe_id = ?, plan = ? '
+                        'WHERE discord_id = ?',
+                        (customer['id'], product['name'], discord_id)
+                    )
+                    log.info("Updated {}'s user info".format(user))
+            else:
                 cur.execute(
                     'UPDATE userInfo '
-                    'SET stripe_id = ?, plan = ? '
-                    'WHERE discord_id = ?',
-                    (customer['id'], product['name'], discord_id)
+                    'SET stripe_id = ? '
+                    'WHERE stripe_id = ?',
+                    (None, customer['id'])
                 )
-                log.info("Updated {}'s user info".format(user))
     con.commit()
     log.info("Set up the webserver")
     while len(args.bot_name) < len(args.bot_tokens):
